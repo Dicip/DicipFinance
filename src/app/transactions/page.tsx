@@ -15,20 +15,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { categories as mockCategories, transactions as mockTransactions } from "@/lib/data";
+import { categories as mockCategories, transactions as mockTransactions, iconMap } from "@/lib/data";
 import type { Category, Transaction } from "@/lib/types";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useDataMode } from "@/hooks/useDataMode";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, PlusCircle, DatabaseBackup } from "lucide-react";
+import { Terminal, PlusCircle, DatabaseBackup, Palette } from "lucide-react";
 import { AddTransactionDialog } from "@/components/transactions/AddTransactionDialog";
 
 export default function TransactionsPage() {
   const { mode, isInitialized: dataModeInitialized } = useDataMode();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
 
@@ -38,30 +38,36 @@ export default function TransactionsPage() {
     }
     setIsLoading(true);
     const timer = setTimeout(() => {
+      let loadedCategories: Category[];
       if (mode === 'online') {
-        console.log("TransactionsPage: MODO ONLINE. Limpiando transacciones locales.");
+        console.log("TransactionsPage: MODO ONLINE. Limpiando transacciones locales. Usando categorías base.");
         setTransactions([]);
-        setCategories(mockCategories); // Categories can remain static for now
-        // In a real app, Firebase fetch for transactions would start here.
+        // En modo online, por ahora, usamos las categorías mock como base,
+        // ya que las personalizadas son locales. En una app real, se cargarían desde BD.
+        loadedCategories = mockCategories.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette }));
       } else { // mode === 'offline'
-        console.log("TransactionsPage: MODO OFFLINE. Cargando transacciones locales.");
+        console.log("TransactionsPage: MODO OFFLINE. Cargando transacciones y categorías locales.");
         setTransactions(mockTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-        setCategories(mockCategories);
+        
+        const storedCategories = localStorage.getItem('customCategories');
+        if (storedCategories) {
+          loadedCategories = JSON.parse(storedCategories).map((cat: Omit<Category, 'icon'>) => ({...cat, icon: iconMap[cat.iconName] || Palette }));
+        } else {
+          loadedCategories = mockCategories.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette }));
+        }
       }
+      setCategories(loadedCategories);
       setIsLoading(false);
     }, 100); // Short delay
     return () => clearTimeout(timer);
   }, [mode, dataModeInitialized]);
 
-  const getCategoryName = (categoryId: string) => {
+  const getCategoryInfo = (categoryId: string): { name: string; icon: Category['icon']; color: string } => {
     const category = categories.find(c => c.id === categoryId);
-    return category ? category.name : "Desconocida";
+    return category 
+      ? { name: category.name, icon: category.icon || Palette, color: category.color }
+      : { name: "Desconocida", icon: Palette, color: "#808080" };
   };
-
-  const getCategoryIcon = (categoryId: string) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category ? <category.icon className="h-4 w-4 mr-2" style={{ color: category.color }} /> : null;
-  }
 
   const handleAddTransaction = (data: { description: string; amount: number; type: 'income' | 'expense'; categoryId: string; date: Date }) => {
     const newTransaction: Transaction = {
@@ -72,8 +78,8 @@ export default function TransactionsPage() {
       categoryId: data.categoryId,
       date: data.date.toISOString(),
     };
-    // In online mode, this would ideally send to Firebase.
-    // For now, it updates local state which will be cleared on next online 'fetch' or mode switch.
+    // En modo online, esto idealmente se enviaría a Firebase.
+    // Por ahora, actualiza el estado local que se borrará en la próxima 'carga' online o cambio de modo.
     setTransactions(prevTransactions =>
       [newTransaction, ...prevTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     );
@@ -110,6 +116,9 @@ export default function TransactionsPage() {
     );
   }
 
+  const expenseCategories = categories.filter(c => c.type === 'expense');
+  const incomeCategories = categories.filter(c => c.type === 'income');
+
   return (
     <>
       <AppHeader title="Transacciones" />
@@ -122,7 +131,7 @@ export default function TransactionsPage() {
                 {transactions.length === 0 && !isLoading
                   ? "Intentando conectar con la base de datos. Si es una cuenta nueva o no hay conexión, no se mostrarán datos. "
                   : "Los datos se gestionan a través de la conexión online. "}
-                La funcionalidad completa de base de datos está pendiente de implementación.
+                La funcionalidad completa de base de datos está pendiente de implementación. Las categorías personalizadas locales no se usan en este modo.
               </AlertDescription>
             </Alert>
           )}
@@ -138,8 +147,8 @@ export default function TransactionsPage() {
           isOpen={isAddTransactionOpen}
           setIsOpen={setIsAddTransactionOpen}
           onAddTransaction={handleAddTransaction}
-          categories={categories.filter(c => c.id !== 'salary' && c.id !== 'freelance')} 
-          incomeCategories={categories.filter(c => c.id === 'salary' || c.id === 'freelance')}
+          categories={expenseCategories} 
+          incomeCategories={incomeCategories}
         />
 
         <Card className="shadow-lg">
@@ -161,39 +170,43 @@ export default function TransactionsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell>
-                          {format(new Date(transaction.date), "dd/MM/yyyy", { locale: es })}
-                        </TableCell>
-                        <TableCell className="font-medium">{transaction.description}</TableCell>
-                        <TableCell className="flex items-center">
-                          {getCategoryIcon(transaction.categoryId)}
-                          {getCategoryName(transaction.categoryId)}
-                        </TableCell>
-                        <TableCell>
-                          <span
+                    {transactions.map((transaction) => {
+                      const categoryInfo = getCategoryInfo(transaction.categoryId);
+                      const IconComponent = categoryInfo.icon;
+                      return (
+                        <TableRow key={transaction.id}>
+                          <TableCell>
+                            {format(new Date(transaction.date), "dd/MM/yyyy", { locale: es })}
+                          </TableCell>
+                          <TableCell className="font-medium">{transaction.description}</TableCell>
+                          <TableCell className="flex items-center">
+                            <IconComponent className="mr-2 h-4 w-4" style={{ color: categoryInfo.color }} />
+                            {categoryInfo.name}
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={cn(
+                                "px-2 py-1 text-xs font-semibold rounded-full",
+                                transaction.type === "income"
+                                  ? "bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100"
+                                  : "bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100"
+                              )}
+                            >
+                              {transaction.type === "income" ? "Ingreso" : "Gasto"}
+                            </span>
+                          </TableCell>
+                          <TableCell
                             className={cn(
-                              "px-2 py-1 text-xs font-semibold rounded-full",
-                              transaction.type === "income"
-                                ? "bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100"
-                                : "bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100"
+                              "text-right font-semibold",
+                              transaction.type === "income" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                             )}
                           >
-                            {transaction.type === "income" ? "Ingreso" : "Gasto"}
-                          </span>
-                        </TableCell>
-                        <TableCell
-                          className={cn(
-                            "text-right font-semibold",
-                            transaction.type === "income" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                          )}
-                        >
-                          {transaction.type === "income" ? "+" : "-"}
-                          ${transaction.amount.toLocaleString("es-CL")}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                            {transaction.type === "income" ? "+" : "-"}
+                            ${transaction.amount.toLocaleString("es-CL")}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
