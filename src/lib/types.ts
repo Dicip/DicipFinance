@@ -20,6 +20,7 @@ export interface Transaction {
 }
 
 export interface BudgetGoal {
+  id: string; // Added id for easier CRUD
   categoryId: string;
   amount: number;
 }
@@ -31,3 +32,4 @@ export interface SpendingByCategory {
 }
 
 export type DataMode = 'online' | 'offline';
+

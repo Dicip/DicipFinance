@@ -19,7 +19,7 @@ const navItems = [
   { href: "/", label: "Panel de Control", icon: LayoutDashboard },
   { href: "/transactions", label: "Transacciones", icon: ArrowRightLeft },
   { href: "/categories", label: "Categorías", icon: Tags, disabled: false },
-  { href: "/budgets", label: "Presupuestos", icon: Target, disabled: true },
+  { href: "/budgets", label: "Presupuestos", icon: Target, disabled: false }, // Enabled
 ];
 
 const footerNavItems = [
@@ -103,3 +103,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

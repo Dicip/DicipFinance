@@ -51,9 +51,10 @@ export const transactions: Transaction[] = [
 ];
 
 export const budgetGoals: BudgetGoal[] = [
-  { categoryId: 'food', amount: 372000 },
-  { categoryId: 'transport', amount: 139500 },
-  { categoryId: 'entertainment', amount: 186000 },
-  { categoryId: 'shopping', amount: 139500 },
-  { categoryId: 'utilities', amount: 139500 },
+  { id: 'budget_food', categoryId: 'food', amount: 372000 },
+  { id: 'budget_transport', categoryId: 'transport', amount: 139500 },
+  { id: 'budget_entertainment', categoryId: 'entertainment', amount: 186000 },
+  { id: 'budget_shopping', categoryId: 'shopping', amount: 139500 },
+  { id: 'budget_utilities', categoryId: 'utilities', amount: 139500 },
 ];
+
