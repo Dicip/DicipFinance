@@ -22,13 +22,13 @@ import { es } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useDataMode } from "@/hooks/useDataMode";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, PlusCircle } from "lucide-react";
+import { Terminal, PlusCircle, DatabaseBackup } from "lucide-react";
 import { AddTransactionDialog } from "@/components/transactions/AddTransactionDialog";
 
 export default function TransactionsPage() {
   const { mode, isInitialized: dataModeInitialized } = useDataMode();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(mockCategories);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
 
@@ -39,17 +39,17 @@ export default function TransactionsPage() {
     setIsLoading(true);
     const timer = setTimeout(() => {
       if (mode === 'online') {
-        // TODO: Implementar carga de datos desde Firebase para el modo online
-        console.log("TransactionsPage: Cargando datos en MODO ONLINE");
-        setTransactions(mockTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-        setCategories(mockCategories);
+        console.log("TransactionsPage: MODO ONLINE. Limpiando transacciones locales.");
+        setTransactions([]);
+        setCategories(mockCategories); // Categories can remain static for now
+        // In a real app, Firebase fetch for transactions would start here.
       } else { // mode === 'offline'
-        console.log("TransactionsPage: Cargando datos en MODO OFFLINE");
+        console.log("TransactionsPage: MODO OFFLINE. Cargando transacciones locales.");
         setTransactions(mockTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
         setCategories(mockCategories);
       }
       setIsLoading(false);
-    }, 500);
+    }, 100); // Short delay
     return () => clearTimeout(timer);
   }, [mode, dataModeInitialized]);
 
@@ -65,17 +65,19 @@ export default function TransactionsPage() {
 
   const handleAddTransaction = (data: { description: string; amount: number; type: 'income' | 'expense'; categoryId: string; date: Date }) => {
     const newTransaction: Transaction = {
-      id: String(Date.now()), // Simple ID generation for mock data
+      id: String(Date.now()), 
       description: data.description,
       amount: data.amount,
       type: data.type,
       categoryId: data.categoryId,
       date: data.date.toISOString(),
     };
+    // In online mode, this would ideally send to Firebase.
+    // For now, it updates local state which will be cleared on next online 'fetch' or mode switch.
     setTransactions(prevTransactions =>
       [newTransaction, ...prevTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     );
-    setIsAddTransactionOpen(false); // Close dialog after adding
+    setIsAddTransactionOpen(false); 
   };
 
   if (!dataModeInitialized || isLoading) {
@@ -83,18 +85,17 @@ export default function TransactionsPage() {
       <>
         <AppHeader title="Transacciones" />
         <main className="flex-1 p-4 md:p-6 space-y-6">
-          {mode === 'online' && dataModeInitialized && (
-             <Alert className="mb-4">
-                <Terminal className="h-4 w-4" />
-                <AlertTitle>Modo Online</AlertTitle>
-                <AlertDescription>
-                  Actualmente se están utilizando datos de ejemplo. La conexión real a la base de datos está pendiente.
-                </AlertDescription>
-              </Alert>
-          )}
+          <Alert className="mb-4">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Modo de Datos</AlertTitle>
+            <AlertDescription>
+              {mode === 'online' ? "Intentando cargar datos en Modo Online..." : "Cargando datos en Modo Offline..."}
+            </AlertDescription>
+          </Alert>
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Historial de Transacciones</CardTitle>
+              <Skeleton className="h-10 w-48" /> {/* Skeleton for Add Button */}
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -114,11 +115,14 @@ export default function TransactionsPage() {
       <AppHeader title="Transacciones" />
       <main className="flex-1 p-4 md:p-6 space-y-4">
         {mode === 'online' && (
-            <Alert>
-              <Terminal className="h-4 w-4" />
-              <AlertTitle>Modo Online</AlertTitle>
+            <Alert className="mb-4 border-blue-500 text-blue-700 dark:border-blue-400 dark:text-blue-300">
+              <Terminal className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
+              <AlertTitle>Modo Online Activo</AlertTitle>
               <AlertDescription>
-                  Actualmente se están utilizando datos de ejemplo. La conexión real a la base de datos está pendiente. Puedes cambiar al modo offline en Configuración.
+                {transactions.length === 0 && !isLoading
+                  ? "Intentando conectar con la base de datos. Si es una cuenta nueva o no hay conexión, no se mostrarán datos. "
+                  : "Los datos se gestionan a través de la conexión online. "}
+                La funcionalidad completa de base de datos está pendiente de implementación.
               </AlertDescription>
             </Alert>
           )}
@@ -134,7 +138,7 @@ export default function TransactionsPage() {
           isOpen={isAddTransactionOpen}
           setIsOpen={setIsAddTransactionOpen}
           onAddTransaction={handleAddTransaction}
-          categories={categories.filter(c => c.id !== 'salary' && c.id !== 'freelance')} // Exclude income categories for expense/income form
+          categories={categories.filter(c => c.id !== 'salary' && c.id !== 'freelance')} 
           incomeCategories={categories.filter(c => c.id === 'salary' || c.id === 'freelance')}
         />
 
@@ -194,7 +198,21 @@ export default function TransactionsPage() {
                 </Table>
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-8">No hay transacciones para mostrar. ¡Agrega una nueva!</p>
+              <div className="text-center py-8">
+                 {mode === 'online' && !isLoading && (
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
+                    <h3 className="text-xl font-semibold">No hay transacciones</h3>
+                    <p className="text-muted-foreground">
+                      En modo online, las transacciones se cargan desde la base de datos. <br />
+                      Puedes agregar una nueva transacción o verificar tu conexión.
+                    </p>
+                  </div>
+                 )}
+                 {mode === 'offline' && (
+                   <p className="text-muted-foreground">No hay transacciones para mostrar en modo offline. ¡Agrega una nueva!</p>
+                 )}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -202,5 +220,3 @@ export default function TransactionsPage() {
     </>
   );
 }
-
-    

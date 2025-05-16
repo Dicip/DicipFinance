@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AppHeader } from '@/components/layout/AppHeader';
@@ -6,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useDataMode } from '@/hooks/useDataMode';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 export default function SettingsPage() {
   const { mode, toggleDataMode, isInitialized } = useDataMode();
@@ -44,7 +47,7 @@ export default function SettingsPage() {
             <CardTitle>Modo de Datos</CardTitle>
             <CardDescription>
               Selecciona si la aplicación debe usar datos locales (offline) o conectarse a una base de datos (online).
-              El cambio de modo recargará la aplicación.
+              El cambio de modo recargará la aplicación para aplicar la nueva fuente de datos.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -59,11 +62,27 @@ export default function SettingsPage() {
                 {mode === 'online' ? 'Modo Online' : 'Modo Offline'}
               </Label>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {mode === 'online'
-                ? "La aplicación está configurada para usar datos de una base de datos online. Actualmente, se utilizan datos de ejemplo ya que la conexión real está pendiente."
-                : "La aplicación está usando datos locales almacenados en el navegador para pruebas y desarrollo."}
-            </p>
+            {mode === 'online' && (
+              <Alert className="border-blue-500 text-blue-700 dark:border-blue-400 dark:text-blue-300">
+                <Info className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
+                <AlertTitle>Información del Modo Online</AlertTitle>
+                <AlertDescription>
+                  En modo online, la aplicación intentará conectarse a una base de datos para obtener y guardar tus datos.
+                  Si no hay conexión o es una cuenta nueva, es posible que no veas ninguna información inicialmente.
+                  La implementación completa de la funcionalidad de base de datos está pendiente.
+                </AlertDescription>
+              </Alert>
+            )}
+            {mode === 'offline' && (
+               <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>Información del Modo Offline</AlertTitle>
+                <AlertDescription>
+                  En modo offline, la aplicación utiliza datos de ejemplo almacenados localmente.
+                  Estos datos son solo para demostración y pruebas, y no se sincronizan con ninguna base de datos externa.
+                </AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
       </main>

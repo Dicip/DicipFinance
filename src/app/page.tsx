@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -11,38 +12,39 @@ import type { Category, Transaction, BudgetGoal, SpendingByCategory } from "@/li
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDataMode } from "@/hooks/useDataMode";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { Terminal, DatabaseBackup } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function DashboardPage() {
   const { mode, isInitialized: dataModeInitialized } = useDataMode();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(mockCategories); // Categories are somewhat static
   const [budgetGoals, setBudgetGoals] = useState<BudgetGoal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!dataModeInitialized) {
-      return; // Esperar a que se inicialice el modo de datos
+      return; 
     }
 
     setIsLoading(true);
-    // Simular carga de datos
+    // Simulate data loading/clearing
     const timer = setTimeout(() => {
       if (mode === 'online') {
-        // TODO: Implementar carga de datos desde Firebase para el modo online
-        // Por ahora, usamos los datos mock para simular.
-        console.log("Dashboard: Cargando datos en MODO ONLINE (simulado con mocks)");
-        setTransactions(mockTransactions);
-        setCategories(mockCategories);
-        setBudgetGoals(mockBudgetGoals);
+        console.log("Dashboard: MODO ONLINE. Limpiando datos locales para simular carga desde BD.");
+        setTransactions([]);
+        setBudgetGoals([]);
+        // Categories can remain as they are more structural or could also be fetched
+        setCategories(mockCategories); 
+        // In a real app, you would initiate Firebase fetch here.
       } else { // mode === 'offline'
-        console.log("Dashboard: Cargando datos en MODO OFFLINE");
+        console.log("Dashboard: MODO OFFLINE. Cargando datos locales.");
         setTransactions(mockTransactions);
         setCategories(mockCategories);
         setBudgetGoals(mockBudgetGoals);
       }
       setIsLoading(false);
-    }, 500); 
+    }, 100); // Short delay to mimic async operation and allow UI to update
     return () => clearTimeout(timer);
   }, [mode, dataModeInitialized]);
 
@@ -78,15 +80,13 @@ export default function DashboardPage() {
       <>
         <AppHeader title="Panel de Control" />
         <main className="flex-1 p-6 space-y-6">
-          {mode === 'online' && dataModeInitialized && (
-             <Alert className="mb-4">
-                <Terminal className="h-4 w-4" />
-                <AlertTitle>Modo Online</AlertTitle>
-                <AlertDescription>
-                  Actualmente se están utilizando datos de ejemplo. La conexión real a la base de datos está pendiente.
-                </AlertDescription>
-              </Alert>
-          )}
+          <Alert className="mb-4">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Modo de Datos</AlertTitle>
+            <AlertDescription>
+              {mode === 'online' ? "Intentando cargar datos en Modo Online..." : "Cargando datos en Modo Offline..."}
+            </AlertDescription>
+          </Alert>
           <div className="grid gap-4 md:grid-cols-3">
             <Skeleton className="h-28 rounded-lg" />
             <Skeleton className="h-28 rounded-lg" />
@@ -108,34 +108,55 @@ export default function DashboardPage() {
       <AppHeader title="Panel de Control" />
       <main className="flex-1 p-4 md:p-6 space-y-6">
         {mode === 'online' && (
-          <Alert className="mb-4">
-            <Terminal className="h-4 w-4" />
-            <AlertTitle>Modo Online</AlertTitle>
+          <Alert className="mb-4 border-blue-500 text-blue-700 dark:border-blue-400 dark:text-blue-300">
+            <Terminal className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
+            <AlertTitle>Modo Online Activo</AlertTitle>
             <AlertDescription>
-                Actualmente se están utilizando datos de ejemplo. La conexión real a la base de datos está pendiente. Puedes cambiar al modo offline en Configuración.
+              {transactions.length === 0 && !isLoading
+                ? "Intentando conectar con la base de datos. Si es una cuenta nueva o no hay conexión, no se mostrarán datos. "
+                : "Los datos se gestionan a través de la conexión online. "}
+              La funcionalidad completa de base de datos está pendiente de implementación.
             </AlertDescription>
           </Alert>
         )}
-        <FinancialOverview totalIncome={totalIncome} totalExpenses={totalExpenses} />
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-          <div className="lg:col-span-4">
-            <SpendingChart data={spendingByCategoryChartData} />
-          </div>
-          <div className="lg:col-span-3">
-            <BudgetProgressCard
-              categories={categories}
-              budgetGoals={budgetGoals}
-              transactions={transactions}
+        {mode === 'online' && transactions.length === 0 && !isLoading && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center justify-center text-center space-y-3">
+                <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
+                <h3 className="text-xl font-semibold">No hay datos para mostrar</h3>
+                <p className="text-muted-foreground">
+                  En modo online, los datos se obtienen de la base de datos. <br />
+                  Asegúrate de tener conexión o verifica si ya has registrado transacciones.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {(mode === 'offline' || (mode === 'online' && transactions.length > 0)) && (
+          <>
+            <FinancialOverview totalIncome={totalIncome} totalExpenses={totalExpenses} />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+              <div className="lg:col-span-4">
+                <SpendingChart data={spendingByCategoryChartData} />
+              </div>
+              <div className="lg:col-span-3">
+                <BudgetProgressCard
+                  categories={categories}
+                  budgetGoals={budgetGoals}
+                  transactions={transactions}
+                />
+              </div>
+            </div>
+            <AiInsightsCard
+                transactions={transactions}
+                categories={categories}
+                budgetGoals={budgetGoals}
             />
-          </div>
-        </div>
-        
-        <AiInsightsCard
-            transactions={transactions}
-            categories={categories}
-            budgetGoals={budgetGoals}
-        />
+          </>
+        )}
       </main>
     </>
   );
