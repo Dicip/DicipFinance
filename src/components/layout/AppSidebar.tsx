@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -13,7 +14,8 @@ import {
 } from "@/components/ui/sidebar";
 import { DicipFinanceLogo } from "@/components/icons/Logo";
 import { LayoutDashboard, Tags, Target, Settings, LogOut, ArrowRightLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+// Button import is not used, can be removed if not needed elsewhere.
+// import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/", label: "Panel de Control", icon: LayoutDashboard },
@@ -67,27 +69,40 @@ export function AppSidebar() {
         <SidebarMenu>
             {footerNavItems.map((item) => (
                  <SidebarMenuItem key={item.label}>
-                 <Link href={item.href} passHref legacyBehavior={item.href.startsWith("#") ? undefined : true}>
+                 {item.href.startsWith("#") ? (
+                   // Action Button (e.g., Logout)
                    <SidebarMenuButton
-                     asChild={!item.href.startsWith("#")} // asChild solo si no es un ancla simple
-                     isActive={pathname === item.href}
+                     // asChild is false by default, SidebarMenuButton renders a <button>
                      tooltip={item.label}
                      disabled={item.disabled}
                      aria-disabled={item.disabled}
-                     onClick={item.href.startsWith("#") ? (e) => e.preventDefault() : undefined}
+                     onClick={(e) => {
+                       e.preventDefault();
+                       // Placeholder for action:
+                       console.log(`Action: ${item.label} clicked`);
+                       // TODO: Implement actual logout logic or other action
+                     }}
                    >
-                     {item.href.startsWith("#") ? 
-                        <button className="w-full">
-                            <item.icon />
-                            <span>{item.label}</span>
-                        </button> :
-                        <a>
-                            <item.icon />
-                            <span>{item.label}</span>
-                        </a>
-                     }
+                     <item.icon />
+                     <span>{item.label}</span>
                    </SidebarMenuButton>
-                 </Link>
+                 ) : (
+                   // Navigation Link
+                   <Link href={item.href} passHref legacyBehavior>
+                     <SidebarMenuButton
+                       asChild // SidebarMenuButton renders a <Slot>
+                       isActive={pathname === item.href}
+                       tooltip={item.label}
+                       disabled={item.disabled}
+                       aria-disabled={item.disabled}
+                     >
+                       <a> {/* This <a> is the child of Slot and styled by SidebarMenuButton */}
+                         <item.icon />
+                         <span>{item.label}</span>
+                       </a>
+                     </SidebarMenuButton>
+                   </Link>
+                 )}
                </SidebarMenuItem>
             ))}
         </SidebarMenu>
@@ -95,3 +110,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
