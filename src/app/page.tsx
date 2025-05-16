@@ -81,7 +81,7 @@ export default function DashboardPage() {
           {mode === 'online' && dataModeInitialized && (
              <Alert className="mb-4">
                 <Terminal className="h-4 w-4" />
-                <AlertTitle>Modo Online (Simulado)</AlertTitle>
+                <AlertTitle>Modo Online</AlertTitle>
                 <AlertDescription>
                   Actualmente se están utilizando datos de ejemplo. La conexión real a la base de datos está pendiente.
                 </AlertDescription>
@@ -110,7 +110,7 @@ export default function DashboardPage() {
         {mode === 'online' && (
           <Alert className="mb-4">
             <Terminal className="h-4 w-4" />
-            <AlertTitle>Modo Online (Simulado)</AlertTitle>
+            <AlertTitle>Modo Online</AlertTitle>
             <AlertDescription>
                 Actualmente se están utilizando datos de ejemplo. La conexión real a la base de datos está pendiente. Puedes cambiar al modo offline en Configuración.
             </AlertDescription>

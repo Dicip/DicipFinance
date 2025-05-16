@@ -56,12 +56,12 @@ export default function SettingsPage() {
                 aria-label={`Cambiar a modo ${mode === 'online' ? 'offline' : 'online'}`}
               />
               <Label htmlFor="data-mode-switch" className="text-base">
-                {mode === 'online' ? 'Modo Online (Simulado)' : 'Modo Offline'}
+                {mode === 'online' ? 'Modo Online' : 'Modo Offline'}
               </Label>
             </div>
             <p className="text-sm text-muted-foreground">
               {mode === 'online'
-                ? "La aplicación está usando datos simulados para el modo online. La integración real con una base de datos (ej. Firebase) está pendiente."
+                ? "La aplicación está configurada para usar datos de una base de datos online. Actualmente, se utilizan datos de ejemplo ya que la conexión real está pendiente."
                 : "La aplicación está usando datos locales almacenados en el navegador para pruebas y desarrollo."}
             </p>
           </CardContent>

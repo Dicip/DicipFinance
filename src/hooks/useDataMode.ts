@@ -37,7 +37,7 @@ export function useDataMode() {
         localStorage.setItem(DATA_MODE_KEY, newMode);
         toast({
           title: "Modo de Datos Actualizado",
-          description: `Cambiado a modo ${newMode === 'online' ? 'Online (Simulado)' : 'Offline'}. La página se recargará.`,
+          description: `Cambiado a modo ${newMode === 'online' ? 'Online' : 'Offline'}. La página se recargará.`,
         });
         // Short delay to allow toast to appear before reload
         setTimeout(() => {
