@@ -31,7 +31,7 @@ export function SpendingChart({ data }: SpendingChartProps) {
           <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="name" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+            <YAxis stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `CLP $${Number(value).toLocaleString('es-CL')}`} />
             <Tooltip
               cursor={{ fill: 'hsl(var(--muted))' }}
               contentStyle={{
@@ -40,7 +40,7 @@ export function SpendingChart({ data }: SpendingChartProps) {
                 borderRadius: 'var(--radius)',
               }}
               labelFormatter={(label) => <div className="text-sm font-medium">{label}</div>}
-              formatter={(value: number, name: string) => [`$${value.toFixed(2)}`, name === 'value' ? 'Gastado' : name]}
+              formatter={(value: number, name: string) => [`CLP $${value.toLocaleString('es-CL')}`, name === 'value' ? 'Gastado' : name]}
             />
             <Legend wrapperStyle={{ fontSize: '12px' }} formatter={(value) => value === 'value' ? 'Gastado' : value} />
             <Bar dataKey="value" name="Gastado" radius={[4, 4, 0, 0]} />

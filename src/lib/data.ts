@@ -12,30 +12,31 @@ export const categories: Category[] = [
   { id: 'freelance', name: 'Freelance', icon: HandCoins, color: 'hsl(var(--chart-3))' },
 ];
 
+// Montos actualizados a CLP (aproximado 1 USD = 930 CLP)
 export const transactions: Transaction[] = [
   // Expenses
-  { id: '1', date: new Date(2024, 6, 1).toISOString(), description: 'Supermercado', amount: 75.50, type: 'expense', categoryId: 'food' },
-  { id: '2', date: new Date(2024, 6, 2).toISOString(), description: 'Gasolina', amount: 40.00, type: 'expense', categoryId: 'transport' },
-  { id: '3', date: new Date(2024, 6, 3).toISOString(), description: 'Entradas de cine', amount: 30.00, type: 'expense', categoryId: 'entertainment' },
-  { id: '4', date: new Date(2024, 6, 5).toISOString(), description: 'Camiseta nueva', amount: 25.00, type: 'expense', categoryId: 'shopping' },
-  { id: '5', date: new Date(2024, 6, 10).toISOString(), description: 'Alquiler', amount: 1200.00, type: 'expense', categoryId: 'housing' },
-  { id: '6', date: new Date(2024, 6, 12).toISOString(), description: 'Factura de electricidad', amount: 65.00, type: 'expense', categoryId: 'utilities' },
-  { id: '7', date: new Date(2024, 6, 15).toISOString(), description: 'Almuerzo con amigos', amount: 45.00, type: 'expense', categoryId: 'food' },
-  { id: '8', date: new Date(2024, 6, 18).toISOString(), description: 'Pasaje de autobús', amount: 20.00, type: 'expense', categoryId: 'transport' },
-  { id: '9', date: new Date(2024, 6, 20).toISOString(), description: 'Entrada de concierto', amount: 80.00, type: 'expense', categoryId: 'entertainment' },
-  { id: '10', date: new Date(2024, 6, 22).toISOString(), description: 'Curso en línea', amount: 50.00, type: 'expense', categoryId: 'shopping' }, // Assuming 'shopping' for digital goods for simplicity
-  { id: '11', date: new Date(2024, 6, 25).toISOString(), description: 'Cena fuera', amount: 60.00, type: 'expense', categoryId: 'food' },
-  { id: '12', date: new Date(2024, 6, 28).toISOString(), description: 'Factura de internet', amount: 55.00, type: 'expense', categoryId: 'utilities' },
+  { id: '1', date: new Date(2024, 6, 1).toISOString(), description: 'Supermercado', amount: 70215, type: 'expense', categoryId: 'food' },
+  { id: '2', date: new Date(2024, 6, 2).toISOString(), description: 'Gasolina', amount: 37200, type: 'expense', categoryId: 'transport' },
+  { id: '3', date: new Date(2024, 6, 3).toISOString(), description: 'Entradas de cine', amount: 27900, type: 'expense', categoryId: 'entertainment' },
+  { id: '4', date: new Date(2024, 6, 5).toISOString(), description: 'Camiseta nueva', amount: 23250, type: 'expense', categoryId: 'shopping' },
+  { id: '5', date: new Date(2024, 6, 10).toISOString(), description: 'Arriendo', amount: 1116000, type: 'expense', categoryId: 'housing' },
+  { id: '6', date: new Date(2024, 6, 12).toISOString(), description: 'Cuenta de electricidad', amount: 60450, type: 'expense', categoryId: 'utilities' },
+  { id: '7', date: new Date(2024, 6, 15).toISOString(), description: 'Almuerzo con amigos', amount: 41850, type: 'expense', categoryId: 'food' },
+  { id: '8', date: new Date(2024, 6, 18).toISOString(), description: 'Pasaje de autobús', amount: 18600, type: 'expense', categoryId: 'transport' },
+  { id: '9', date: new Date(2024, 6, 20).toISOString(), description: 'Entrada de concierto', amount: 74400, type: 'expense', categoryId: 'entertainment' },
+  { id: '10', date: new Date(2024, 6, 22).toISOString(), description: 'Curso en línea', amount: 46500, type: 'expense', categoryId: 'shopping' },
+  { id: '11', date: new Date(2024, 6, 25).toISOString(), description: 'Cena fuera', amount: 55800, type: 'expense', categoryId: 'food' },
+  { id: '12', date: new Date(2024, 6, 28).toISOString(), description: 'Cuenta de internet', amount: 51150, type: 'expense', categoryId: 'utilities' },
 
   // Income
-  { id: '101', date: new Date(2024, 6, 1).toISOString(), description: 'Salario mensual', amount: 3000.00, type: 'income', categoryId: 'salary' },
-  { id: '102', date: new Date(2024, 6, 15).toISOString(), description: 'Proyecto freelance A', amount: 500.00, type: 'income', categoryId: 'freelance' },
+  { id: '101', date: new Date(2024, 6, 1).toISOString(), description: 'Salario mensual', amount: 2790000, type: 'income', categoryId: 'salary' },
+  { id: '102', date: new Date(2024, 6, 15).toISOString(), description: 'Proyecto freelance A', amount: 465000, type: 'income', categoryId: 'freelance' },
 ];
 
 export const budgetGoals: BudgetGoal[] = [
-  { categoryId: 'food', amount: 400 },
-  { categoryId: 'transport', amount: 150 },
-  { categoryId: 'entertainment', amount: 200 },
-  { categoryId: 'shopping', amount: 150 },
-  { categoryId: 'utilities', amount: 150 },
+  { categoryId: 'food', amount: 372000 },
+  { categoryId: 'transport', amount: 139500 },
+  { categoryId: 'entertainment', amount: 186000 },
+  { categoryId: 'shopping', amount: 139500 },
+  { categoryId: 'utilities', amount: 139500 },
 ];

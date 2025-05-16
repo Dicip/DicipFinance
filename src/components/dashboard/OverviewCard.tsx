@@ -19,7 +19,7 @@ function StatCard({ title, amount, icon: Icon, isCurrency = true }: OverviewCard
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">
-          {isCurrency ? `$${amount.toFixed(2)}` : amount}
+          {isCurrency ? `CLP $${amount.toLocaleString('es-CL')}` : amount}
         </div>
       </CardContent>
     </Card>

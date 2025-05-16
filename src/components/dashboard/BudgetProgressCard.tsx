@@ -39,7 +39,7 @@ export function BudgetProgressCard({ categories, budgetGoals, transactions }: Bu
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Progreso del Presupuesto</CardTitle>
-          <CardDescription>Sigue tus gastos en comparación con tus objetivos de presupuesto.</CardDescription>
+          <CardDescription>Realiza un seguimiento de tus gastos en comparación con tus objetivos de presupuesto.</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">Aún no se han establecido objetivos de presupuesto.</p>
@@ -52,7 +52,7 @@ export function BudgetProgressCard({ categories, budgetGoals, transactions }: Bu
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle>Progreso del Presupuesto</CardTitle>
-        <CardDescription>Sigue tus gastos en comparación con tus objetivos de presupuesto.</CardDescription>
+        <CardDescription>Realiza un seguimiento de tus gastos en comparación con tus objetivos de presupuesto.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {budgetItems.map(item => (
@@ -65,7 +65,7 @@ export function BudgetProgressCard({ categories, budgetGoals, transactions }: Bu
               <div className="flex items-center space-x-2">
                 {item.overBudget && <AlertTriangle className="h-4 w-4 text-destructive" />}
                 <span className={`text-sm ${item.overBudget ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  ${item.spent.toFixed(2)} / ${item.goal.toFixed(2)}
+                  CLP ${item.spent.toLocaleString('es-CL')} / CLP ${item.goal.toLocaleString('es-CL')}
                 </span>
               </div>
             </div>
