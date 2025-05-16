@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,6 +13,7 @@ import {
   TableCaption,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { categories as mockCategories, transactions as mockTransactions } from "@/lib/data";
 import type { Category, Transaction } from "@/lib/types";
@@ -20,23 +22,25 @@ import { es } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useDataMode } from "@/hooks/useDataMode";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { Terminal, PlusCircle } from "lucide-react";
+import { AddTransactionDialog } from "@/components/transactions/AddTransactionDialog";
 
 export default function TransactionsPage() {
   const { mode, isInitialized: dataModeInitialized } = useDataMode();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
 
   useEffect(() => {
     if (!dataModeInitialized) {
-      return; // Esperar a que se inicialice el modo de datos
+      return; 
     }
     setIsLoading(true);
     const timer = setTimeout(() => {
       if (mode === 'online') {
         // TODO: Implementar carga de datos desde Firebase para el modo online
-        console.log("TransactionsPage: Cargando datos en MODO ONLINE (simulado con mocks)");
+        console.log("TransactionsPage: Cargando datos en MODO ONLINE");
         setTransactions(mockTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
         setCategories(mockCategories);
       } else { // mode === 'offline'
@@ -58,6 +62,21 @@ export default function TransactionsPage() {
     const category = categories.find(c => c.id === categoryId);
     return category ? <category.icon className="h-4 w-4 mr-2" style={{ color: category.color }} /> : null;
   }
+
+  const handleAddTransaction = (data: { description: string; amount: number; type: 'income' | 'expense'; categoryId: string; date: Date }) => {
+    const newTransaction: Transaction = {
+      id: String(Date.now()), // Simple ID generation for mock data
+      description: data.description,
+      amount: data.amount,
+      type: data.type,
+      categoryId: data.categoryId,
+      date: data.date.toISOString(),
+    };
+    setTransactions(prevTransactions =>
+      [newTransaction, ...prevTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    );
+    setIsAddTransactionOpen(false); // Close dialog after adding
+  };
 
   if (!dataModeInitialized || isLoading) {
     return (
@@ -103,6 +122,22 @@ export default function TransactionsPage() {
               </AlertDescription>
             </Alert>
           )}
+        
+        <div className="flex justify-end mb-4">
+          <Button onClick={() => setIsAddTransactionOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Agregar Nueva Transacción
+          </Button>
+        </div>
+
+        <AddTransactionDialog
+          isOpen={isAddTransactionOpen}
+          setIsOpen={setIsAddTransactionOpen}
+          onAddTransaction={handleAddTransaction}
+          categories={categories.filter(c => c.id !== 'salary' && c.id !== 'freelance')} // Exclude income categories for expense/income form
+          incomeCategories={categories.filter(c => c.id === 'salary' || c.id === 'freelance')}
+        />
+
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Historial de Transacciones</CardTitle>
@@ -159,7 +194,7 @@ export default function TransactionsPage() {
                 </Table>
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-8">No hay transacciones para mostrar.</p>
+              <p className="text-center text-muted-foreground py-8">No hay transacciones para mostrar. ¡Agrega una nueva!</p>
             )}
           </CardContent>
         </Card>
@@ -167,3 +202,5 @@ export default function TransactionsPage() {
     </>
   );
 }
+
+    
