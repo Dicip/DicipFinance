@@ -39,7 +39,7 @@ export function SpendingChart({ data }: SpendingChartProps) {
                 borderColor: 'hsl(var(--border))',
                 borderRadius: 'var(--radius)',
               }}
-              labelFormatter={(label) => <div className="text-sm font-medium">{label}</div>}
+              labelFormatter={(label) => <span className="text-sm font-medium">{label}</span>}
               formatter={(value: number, name: string) => [`CLP $${value.toLocaleString('es-CL')}`, name === 'value' ? 'Gastado' : name]}
             />
             <Legend wrapperStyle={{ fontSize: '12px' }} formatter={(value) => value === 'value' ? 'Gastado' : value} />
