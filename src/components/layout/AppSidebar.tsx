@@ -14,13 +14,11 @@ import {
 } from "@/components/ui/sidebar";
 import { DicipFinanceLogo } from "@/components/icons/Logo";
 import { LayoutDashboard, Tags, Target, Settings, LogOut, ArrowRightLeft } from "lucide-react";
-// Button import is not used, can be removed if not needed elsewhere.
-// import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/", label: "Panel de Control", icon: LayoutDashboard },
   { href: "/transactions", label: "Transacciones", icon: ArrowRightLeft },
-  { href: "/categories", label: "Categorías", icon: Tags, disabled: true },
+  { href: "/categories", label: "Categorías", icon: Tags, disabled: false },
   { href: "/budgets", label: "Presupuestos", icon: Target, disabled: true },
 ];
 
@@ -70,33 +68,28 @@ export function AppSidebar() {
             {footerNavItems.map((item) => (
                  <SidebarMenuItem key={item.label}>
                  {item.href.startsWith("#") ? (
-                   // Action Button (e.g., Logout)
                    <SidebarMenuButton
-                     // asChild is false by default, SidebarMenuButton renders a <button>
                      tooltip={item.label}
                      disabled={item.disabled}
                      aria-disabled={item.disabled}
                      onClick={(e) => {
                        e.preventDefault();
-                       // Placeholder for action:
                        console.log(`Action: ${item.label} clicked`);
-                       // TODO: Implement actual logout logic or other action
                      }}
                    >
                      <item.icon />
                      <span>{item.label}</span>
                    </SidebarMenuButton>
                  ) : (
-                   // Navigation Link
                    <Link href={item.href} passHref legacyBehavior>
                      <SidebarMenuButton
-                       asChild // SidebarMenuButton renders a <Slot>
+                       asChild
                        isActive={pathname === item.href}
                        tooltip={item.label}
                        disabled={item.disabled}
                        aria-disabled={item.disabled}
                      >
-                       <a> {/* This <a> is the child of Slot and styled by SidebarMenuButton */}
+                       <a>
                          <item.icon />
                          <span>{item.label}</span>
                        </a>
@@ -110,4 +103,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-

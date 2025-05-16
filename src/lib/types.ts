@@ -1,10 +1,13 @@
+
 import type { LucideIcon } from 'lucide-react';
 
 export interface Category {
   id: string;
   name: string;
-  icon: LucideIcon;
-  color: string; // hex color string for charts e.g. #FF5733
+  icon: LucideIcon; // Para visualización inmediata
+  iconName: string; // Nombre del icono de Lucide para almacenamiento y selección
+  color: string;    // hex color string e.g. #FF5733
+  type: 'income' | 'expense';
 }
 
 export interface Transaction {

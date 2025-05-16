@@ -1,15 +1,32 @@
+
 import type { Category, Transaction, BudgetGoal } from '@/lib/types';
-import { Utensils, Car, Film, ShoppingBag, Home, Zap, Landmark, HandCoins } from 'lucide-react';
+import { Utensils, Car, Film, ShoppingBag, Home, Zap, Landmark, HandCoins, Palette } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+// Helper para obtener dinámicamente el componente de icono
+// Podríamos tener un mapeo más robusto si fuera necesario.
+export const iconMap: { [key: string]: LucideIcon } = {
+  Utensils,
+  Car,
+  Film,
+  ShoppingBag,
+  Home,
+  Zap,
+  Landmark,
+  HandCoins,
+  Palette, // Default/fallback icon
+};
+
 
 export const categories: Category[] = [
-  { id: 'food', name: 'Alimentación', icon: Utensils, color: 'hsl(var(--chart-1))' },
-  { id: 'transport', name: 'Transporte', icon: Car, color: 'hsl(var(--chart-2))' },
-  { id: 'entertainment', name: 'Entretenimiento', icon: Film, color: 'hsl(var(--chart-3))' },
-  { id: 'shopping', name: 'Compras', icon: ShoppingBag, color: 'hsl(var(--chart-4))' },
-  { id: 'housing', name: 'Vivienda', icon: Home, color: 'hsl(var(--chart-5))' },
-  { id: 'utilities', name: 'Servicios', icon: Zap, color: 'hsl(var(--chart-1))' }, // Re-using chart colors
-  { id: 'salary', name: 'Salario', icon: Landmark, color: 'hsl(var(--chart-2))' },
-  { id: 'freelance', name: 'Freelance', icon: HandCoins, color: 'hsl(var(--chart-3))' },
+  { id: 'food', name: 'Alimentación', iconName: 'Utensils', icon: Utensils, color: '#FF6384', type: 'expense' },
+  { id: 'transport', name: 'Transporte', iconName: 'Car', icon: Car, color: '#36A2EB', type: 'expense' },
+  { id: 'entertainment', name: 'Entretenimiento', iconName: 'Film', icon: Film, color: '#FFCE56', type: 'expense' },
+  { id: 'shopping', name: 'Compras', iconName: 'ShoppingBag', icon: ShoppingBag, color: '#4BC0C0', type: 'expense' },
+  { id: 'housing', name: 'Vivienda', iconName: 'Home', icon: Home, color: '#9966FF', type: 'expense' },
+  { id: 'utilities', name: 'Servicios', iconName: 'Zap', icon: Zap, color: '#FF9F40', type: 'expense' },
+  { id: 'salary', name: 'Salario', iconName: 'Landmark', icon: Landmark, color: '#2ECC71', type: 'income' },
+  { id: 'freelance', name: 'Freelance', iconName: 'HandCoins', icon: HandCoins, color: '#3498DB', type: 'income' },
 ];
 
 // Montos actualizados a CLP (aproximado 1 USD = 930 CLP)
