@@ -12,13 +12,14 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { DicipFinanceLogo } from "@/components/icons/Logo";
-import { LayoutDashboard, Tags, Target, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Tags, Target, Settings, LogOut, ArrowRightLeft } from "lucide-react"; // Añadido ArrowRightLeft
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/", label: "Panel de Control", icon: LayoutDashboard },
-  { href: "/categories", label: "Categorías", icon: Tags, disabled: true }, // Disabled for now
-  { href: "/budgets", label: "Presupuestos", icon: Target, disabled: true }, // Disabled for now
+  { href: "/transactions", label: "Transacciones", icon: ArrowRightLeft }, // Nueva entrada para Transacciones
+  { href: "/categories", label: "Categorías", icon: Tags, disabled: true },
+  { href: "/budgets", label: "Presupuestos", icon: Target, disabled: true },
 ];
 
 export function AppSidebar() {
