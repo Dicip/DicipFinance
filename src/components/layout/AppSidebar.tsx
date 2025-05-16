@@ -16,9 +16,9 @@ import { LayoutDashboard, Tags, Target, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/categories", label: "Categories", icon: Tags, disabled: true }, // Disabled for now
-  { href: "/budgets", label: "Budgets", icon: Target, disabled: true }, // Disabled for now
+  { href: "/", label: "Panel de Control", icon: LayoutDashboard },
+  { href: "/categories", label: "Categorías", icon: Tags, disabled: true }, // Disabled for now
+  { href: "/budgets", label: "Presupuestos", icon: Target, disabled: true }, // Disabled for now
 ];
 
 export function AppSidebar() {
@@ -59,15 +59,15 @@ export function AppSidebar() {
       <SidebarFooter className="p-2">
         <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Settings" disabled aria-disabled="true">
+                <SidebarMenuButton tooltip="Configuración" disabled aria-disabled="true">
                     <Settings />
-                    <span>Settings</span>
+                    <span>Configuración</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Log Out" disabled aria-disabled="true">
+                <SidebarMenuButton tooltip="Cerrar Sesión" disabled aria-disabled="true">
                     <LogOut />
-                    <span>Log Out</span>
+                    <span>Cerrar Sesión</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>

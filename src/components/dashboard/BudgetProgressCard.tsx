@@ -38,11 +38,11 @@ export function BudgetProgressCard({ categories, budgetGoals, transactions }: Bu
     return (
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Budget Progress</CardTitle>
-          <CardDescription>Track your spending against your budget goals.</CardDescription>
+          <CardTitle>Progreso del Presupuesto</CardTitle>
+          <CardDescription>Sigue tus gastos en comparación con tus objetivos de presupuesto.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">No budget goals set yet.</p>
+          <p className="text-muted-foreground">Aún no se han establecido objetivos de presupuesto.</p>
         </CardContent>
       </Card>
     );
@@ -51,8 +51,8 @@ export function BudgetProgressCard({ categories, budgetGoals, transactions }: Bu
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle>Budget Progress</CardTitle>
-        <CardDescription>Track your spending against your budget goals.</CardDescription>
+        <CardTitle>Progreso del Presupuesto</CardTitle>
+        <CardDescription>Sigue tus gastos en comparación con tus objetivos de presupuesto.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {budgetItems.map(item => (

@@ -13,10 +13,10 @@ export function SpendingChart({ data }: SpendingChartProps) {
     return (
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Spending by Category</CardTitle>
+          <CardTitle>Gasto por Categoría</CardTitle>
         </CardHeader>
         <CardContent className="h-[300px] flex items-center justify-center">
-          <p className="text-muted-foreground">No spending data available for this period.</p>
+          <p className="text-muted-foreground">No hay datos de gastos disponibles para este período.</p>
         </CardContent>
       </Card>
     );
@@ -24,7 +24,7 @@ export function SpendingChart({ data }: SpendingChartProps) {
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle>Spending by Category</CardTitle>
+        <CardTitle>Gasto por Categoría</CardTitle>
       </CardHeader>
       <CardContent className="pt-2">
         <ResponsiveContainer width="100%" height={300}>
@@ -39,9 +39,11 @@ export function SpendingChart({ data }: SpendingChartProps) {
                 borderColor: 'hsl(var(--border))',
                 borderRadius: 'var(--radius)',
               }}
+              labelFormatter={(label) => <div className="text-sm font-medium">{label}</div>}
+              formatter={(value: number, name: string) => [`$${value.toFixed(2)}`, name === 'value' ? 'Gastado' : name]}
             />
-            <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Bar dataKey="value" name="Spent" radius={[4, 4, 0, 0]} />
+            <Legend wrapperStyle={{ fontSize: '12px' }} formatter={(value) => value === 'value' ? 'Gastado' : value} />
+            <Bar dataKey="value" name="Gastado" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

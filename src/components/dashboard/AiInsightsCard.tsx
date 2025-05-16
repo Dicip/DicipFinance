@@ -37,18 +37,18 @@ export function AiInsightsCard({ transactions, categories, budgetGoals }: AiInsi
       }, {} as Record<string, number>);
 
       if (Object.keys(spendingDataForAI).length === 0) {
-        setSpendingSummary("Not enough spending data to generate a summary.");
+        setSpendingSummary("No hay suficientes datos de gastos para generar un resumen.");
         return;
       }
       
       const result = await summarizeSpendingHabits({ spendingData: spendingDataForAI });
       setSpendingSummary(result.summary);
     } catch (error) {
-      console.error("Error fetching spending summary:", error);
-      setSpendingSummary("Could not generate spending summary at this time.");
+      console.error("Error al obtener el resumen de gastos:", error);
+      setSpendingSummary("No se pudo generar el resumen de gastos en este momento.");
       toast({
         title: "Error",
-        description: "Failed to generate spending summary.",
+        description: "No se pudo generar el resumen de gastos.",
         variant: "destructive",
       });
     } finally {
@@ -61,7 +61,7 @@ export function AiInsightsCard({ transactions, categories, budgetGoals }: AiInsi
     try {
       const spendingDataString = JSON.stringify(
         transactions.map(t => ({
-          category: categories.find(c => c.id === t.categoryId)?.name || 'Unknown',
+          category: categories.find(c => c.id === t.categoryId)?.name || 'Desconocida',
           amount: t.amount,
           type: t.type,
           date: t.date,
@@ -69,13 +69,13 @@ export function AiInsightsCard({ transactions, categories, budgetGoals }: AiInsi
       );
       const budgetGoalsString = JSON.stringify(
         budgetGoals.map(bg => ({
-          category: categories.find(c => c.id === bg.categoryId)?.name || 'Unknown',
+          category: categories.find(c => c.id === bg.categoryId)?.name || 'Desconocida',
           goal: bg.amount,
         }))
       );
 
       if (transactions.length === 0 || budgetGoals.length === 0) {
-        setBudgetTips("Not enough data to generate budget tips. Please add transactions and set budget goals.");
+        setBudgetTips("No hay suficientes datos para generar consejos de presupuesto. Agrega transacciones y establece objetivos de presupuesto.");
         return;
       }
 
@@ -85,11 +85,11 @@ export function AiInsightsCard({ transactions, categories, budgetGoals }: AiInsi
       });
       setBudgetTips(result.tips);
     } catch (error) {
-      console.error("Error fetching budget tips:", error);
-      setBudgetTips("Could not generate budget tips at this time.");
+      console.error("Error al obtener consejos de presupuesto:", error);
+      setBudgetTips("No se pudieron generar los consejos de presupuesto en este momento.");
        toast({
         title: "Error",
-        description: "Failed to generate budget tips.",
+        description: "No se pudieron generar los consejos de presupuesto.",
         variant: "destructive",
       });
     } finally {
@@ -107,14 +107,14 @@ export function AiInsightsCard({ transactions, categories, budgetGoals }: AiInsi
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle>AI Financial Assistant</CardTitle>
-        <CardDescription>Smart insights to help you manage your finances.</CardDescription>
+        <CardTitle>Asistente Financiero IA</CardTitle>
+        <CardDescription>Información inteligente para ayudarte a administrar tus finanzas.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
           <h3 className="text-md font-semibold mb-2 flex items-center">
             <FileText className="mr-2 h-5 w-5 text-primary" />
-            Spending Summary
+            Resumen de Gastos
           </h3>
           {isSummaryLoading ? (
             <div className="space-y-2">
@@ -123,16 +123,16 @@ export function AiInsightsCard({ transactions, categories, budgetGoals }: AiInsi
               <Skeleton className="h-4 w-3/4" />
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{spendingSummary || "Click 'Refresh' to generate summary."}</p>
+            <p className="text-sm text-muted-foreground whitespace-pre-line">{spendingSummary || "Haz clic en 'Actualizar' para generar el resumen."}</p>
           )}
           <Button variant="outline" size="sm" onClick={fetchSpendingSummary} disabled={isSummaryLoading} className="mt-2">
-            {isSummaryLoading ? "Loading..." : "Refresh Summary"}
+            {isSummaryLoading ? "Cargando..." : "Actualizar Resumen"}
           </Button>
         </div>
         <div className="border-t pt-6">
           <h3 className="text-md font-semibold mb-2 flex items-center">
             <Lightbulb className="mr-2 h-5 w-5 text-accent" />
-            Budget Tips
+            Consejos de Presupuesto
           </h3>
           {isTipsLoading ? (
             <div className="space-y-2">
@@ -141,10 +141,10 @@ export function AiInsightsCard({ transactions, categories, budgetGoals }: AiInsi
               <Skeleton className="h-4 w-5/6" />
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{budgetTips || "Click 'Refresh' to generate tips."}</p>
+            <p className="text-sm text-muted-foreground whitespace-pre-line">{budgetTips || "Haz clic en 'Actualizar' para generar consejos."}</p>
           )}
           <Button variant="outline" size="sm" onClick={fetchBudgetTips} disabled={isTipsLoading} className="mt-2">
-            {isTipsLoading ? "Loading..." : "Refresh Tips"}
+            {isTipsLoading ? "Cargando..." : "Actualizar Consejos"}
           </Button>
         </div>
       </CardContent>

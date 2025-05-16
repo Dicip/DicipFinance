@@ -1,11 +1,11 @@
 // Summarize spending habits flow.
 'use server';
 /**
- * @fileOverview Summarizes user's spending habits in each category over the past month.
+ * @fileOverview Resume los hábitos de gasto del usuario en cada categoría durante el último mes.
  *
- * - summarizeSpendingHabits - A function that handles the summarization of spending habits.
- * - SummarizeSpendingHabitsInput - The input type for the summarizeSpendingHabits function.
- * - SummarizeSpendingHabitsOutput - The return type for the summarizeSpendingHabits function.
+ * - summarizeSpendingHabits - Una función que maneja el resumen de los hábitos de gasto.
+ * - SummarizeSpendingHabitsInput - El tipo de entrada para la función summarizeSpendingHabits.
+ * - SummarizeSpendingHabitsOutput - El tipo de retorno para la función summarizeSpendingHabits.
  */
 
 import {ai} from '@/ai/genkit';
@@ -13,13 +13,13 @@ import {z} from 'genkit';
 
 const SummarizeSpendingHabitsInputSchema = z.object({
   spendingData: z.record(z.string(), z.number()).describe(
-    'A record of spending data, where the key is the spending category and the value is the amount spent in the past month.'
+    'Un registro de datos de gastos, donde la clave es la categoría de gasto y el valor es la cantidad gastada en el último mes.'
   ),
 });
 export type SummarizeSpendingHabitsInput = z.infer<typeof SummarizeSpendingHabitsInputSchema>;
 
 const SummarizeSpendingHabitsOutputSchema = z.object({
-  summary: z.string().describe('A summary of the user\'s spending habits in each category.'),
+  summary: z.string().describe('Un resumen de los hábitos de gasto del usuario en cada categoría.'),
 });
 export type SummarizeSpendingHabitsOutput = z.infer<typeof SummarizeSpendingHabitsOutputSchema>;
 
@@ -31,15 +31,15 @@ const prompt = ai.definePrompt({
   name: 'summarizeSpendingHabitsPrompt',
   input: {schema: SummarizeSpendingHabitsInputSchema},
   output: {schema: SummarizeSpendingHabitsOutputSchema},
-  prompt: `You are a personal finance expert. You are helping a user understand their spending habits over the past month.
+  prompt: `Eres un experto en finanzas personales. Estás ayudando a un usuario a comprender sus hábitos de gasto durante el último mes.
 
-  Here is a record of their spending, where the key is the category and the value is the amount spent:
+  Aquí tienes un registro de sus gastos, donde la clave es la categoría y el valor es la cantidad gastada:
 
   {{#each spendingData}}
   - {{@key}}: {{this}}
   {{/each}}
 
-  Generate a concise summary of the user's spending habits, highlighting the categories where they spent the most and any potential areas for improvement.
+  Genera un resumen conciso de los hábitos de gasto del usuario, destacando las categorías en las que gastó más y cualquier área potencial de mejora.
   `,
 });
 

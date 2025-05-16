@@ -37,9 +37,9 @@ export function FinancialOverview({ totalIncome, totalExpenses }: FinancialOverv
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <StatCard title="Total Income" amount={totalIncome} icon={TrendingUp} />
-      <StatCard title="Total Expenses" amount={totalExpenses} icon={TrendingDown} />
-      <StatCard title="Balance" amount={balance} icon={Scale} />
+      <StatCard title="Ingresos Totales" amount={totalIncome} icon={TrendingUp} />
+      <StatCard title="Gastos Totales" amount={totalExpenses} icon={TrendingDown} />
+      <StatCard title="Saldo" amount={balance} icon={Scale} />
     </div>
   );
 }
