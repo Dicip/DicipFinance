@@ -26,3 +26,5 @@ export interface SpendingByCategory {
   value: number;
   fill: string;
 }
+
+export type DataMode = 'online' | 'offline';

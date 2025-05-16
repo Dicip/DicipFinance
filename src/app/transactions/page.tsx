@@ -18,20 +18,36 @@ import type { Category, Transaction } from "@/lib/types";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
+import { useDataMode } from "@/hooks/useDataMode";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal } from "lucide-react";
 
 export default function TransactionsPage() {
+  const { mode, isInitialized: dataModeInitialized } = useDataMode();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!dataModeInitialized) {
+      return; // Esperar a que se inicialice el modo de datos
+    }
+    setIsLoading(true);
     const timer = setTimeout(() => {
-      setTransactions(mockTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-      setCategories(mockCategories);
+      if (mode === 'online') {
+        // TODO: Implementar carga de datos desde Firebase para el modo online
+        console.log("TransactionsPage: Cargando datos en MODO ONLINE (simulado con mocks)");
+        setTransactions(mockTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setCategories(mockCategories);
+      } else { // mode === 'offline'
+        console.log("TransactionsPage: Cargando datos en MODO OFFLINE");
+        setTransactions(mockTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setCategories(mockCategories);
+      }
       setIsLoading(false);
     }, 500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [mode, dataModeInitialized]);
 
   const getCategoryName = (categoryId: string) => {
     const category = categories.find(c => c.id === categoryId);
@@ -43,18 +59,27 @@ export default function TransactionsPage() {
     return category ? <category.icon className="h-4 w-4 mr-2" style={{ color: category.color }} /> : null;
   }
 
-  if (isLoading) {
+  if (!dataModeInitialized || isLoading) {
     return (
       <>
         <AppHeader title="Transacciones" />
         <main className="flex-1 p-4 md:p-6 space-y-6">
+          {mode === 'online' && dataModeInitialized && (
+             <Alert className="mb-4">
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>Modo Online (Simulado)</AlertTitle>
+                <AlertDescription>
+                  Actualmente se están utilizando datos de ejemplo. La conexión real a la base de datos está pendiente.
+                </AlertDescription>
+              </Alert>
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Historial de Transacciones</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {[...Array(5)].map((_, i) => (
+                {[...Array(10)].map((_, i) => (
                   <Skeleton key={i} className="h-10 w-full rounded-md" />
                 ))}
               </div>
@@ -68,7 +93,16 @@ export default function TransactionsPage() {
   return (
     <>
       <AppHeader title="Transacciones" />
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1 p-4 md:p-6 space-y-4">
+        {mode === 'online' && (
+            <Alert>
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>Modo Online (Simulado)</AlertTitle>
+              <AlertDescription>
+                  Actualmente se están utilizando datos de ejemplo. La conexión real a la base de datos está pendiente. Puedes cambiar al modo offline en Configuración.
+              </AlertDescription>
+            </Alert>
+          )}
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Historial de Transacciones</CardTitle>

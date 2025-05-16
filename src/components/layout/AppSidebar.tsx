@@ -12,15 +12,21 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { DicipFinanceLogo } from "@/components/icons/Logo";
-import { LayoutDashboard, Tags, Target, Settings, LogOut, ArrowRightLeft } from "lucide-react"; // Añadido ArrowRightLeft
+import { LayoutDashboard, Tags, Target, Settings, LogOut, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/", label: "Panel de Control", icon: LayoutDashboard },
-  { href: "/transactions", label: "Transacciones", icon: ArrowRightLeft }, // Nueva entrada para Transacciones
+  { href: "/transactions", label: "Transacciones", icon: ArrowRightLeft },
   { href: "/categories", label: "Categorías", icon: Tags, disabled: true },
   { href: "/budgets", label: "Presupuestos", icon: Target, disabled: true },
 ];
+
+const footerNavItems = [
+    { href: "/settings", label: "Configuración", icon: Settings, disabled: false },
+    { href: "#logout", label: "Cerrar Sesión", icon: LogOut, disabled: true }, //  Simulando un enlace de cierre de sesión
+];
+
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -59,18 +65,31 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-2">
         <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Configuración" disabled aria-disabled="true">
-                    <Settings />
-                    <span>Configuración</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Cerrar Sesión" disabled aria-disabled="true">
-                    <LogOut />
-                    <span>Cerrar Sesión</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+            {footerNavItems.map((item) => (
+                 <SidebarMenuItem key={item.label}>
+                 <Link href={item.href} passHref legacyBehavior={item.href.startsWith("#") ? undefined : true}>
+                   <SidebarMenuButton
+                     asChild={!item.href.startsWith("#")} // asChild solo si no es un ancla simple
+                     isActive={pathname === item.href}
+                     tooltip={item.label}
+                     disabled={item.disabled}
+                     aria-disabled={item.disabled}
+                     onClick={item.href.startsWith("#") ? (e) => e.preventDefault() : undefined}
+                   >
+                     {item.href.startsWith("#") ? 
+                        <button className="w-full">
+                            <item.icon />
+                            <span>{item.label}</span>
+                        </button> :
+                        <a>
+                            <item.icon />
+                            <span>{item.label}</span>
+                        </a>
+                     }
+                   </SidebarMenuButton>
+                 </Link>
+               </SidebarMenuItem>
+            ))}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>

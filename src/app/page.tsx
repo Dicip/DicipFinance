@@ -9,24 +9,42 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { categories as mockCategories, transactions as mockTransactions, budgetGoals as mockBudgetGoals } from "@/lib/data";
 import type { Category, Transaction, BudgetGoal, SpendingByCategory } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDataMode } from "@/hooks/useDataMode";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal } from "lucide-react";
 
 export default function DashboardPage() {
-  // For a real app, this data would come from a state management solution or API
+  const { mode, isInitialized: dataModeInitialized } = useDataMode();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgetGoals, setBudgetGoals] = useState<BudgetGoal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate data fetching
+    if (!dataModeInitialized) {
+      return; // Esperar a que se inicialice el modo de datos
+    }
+
+    setIsLoading(true);
+    // Simular carga de datos
     const timer = setTimeout(() => {
-      setTransactions(mockTransactions);
-      setCategories(mockCategories);
-      setBudgetGoals(mockBudgetGoals);
+      if (mode === 'online') {
+        // TODO: Implementar carga de datos desde Firebase para el modo online
+        // Por ahora, usamos los datos mock para simular.
+        console.log("Dashboard: Cargando datos en MODO ONLINE (simulado con mocks)");
+        setTransactions(mockTransactions);
+        setCategories(mockCategories);
+        setBudgetGoals(mockBudgetGoals);
+      } else { // mode === 'offline'
+        console.log("Dashboard: Cargando datos en MODO OFFLINE");
+        setTransactions(mockTransactions);
+        setCategories(mockCategories);
+        setBudgetGoals(mockBudgetGoals);
+      }
       setIsLoading(false);
-    }, 500); // Simulate network delay
+    }, 500); 
     return () => clearTimeout(timer);
-  }, []);
+  }, [mode, dataModeInitialized]);
 
   const totalIncome = useMemo(() => {
     return transactions
@@ -49,17 +67,26 @@ export default function DashboardPage() {
         return {
           name: category.name,
           value: categoryExpenses,
-          fill: category.color, // Use category color for the chart
+          fill: category.color,
         };
       })
-      .filter(item => item.value > 0); // Only include categories with spending
+      .filter(item => item.value > 0);
   }, [transactions, categories]);
 
-  if (isLoading) {
+  if (!dataModeInitialized || isLoading) {
     return (
       <>
         <AppHeader title="Panel de Control" />
         <main className="flex-1 p-6 space-y-6">
+          {mode === 'online' && dataModeInitialized && (
+             <Alert className="mb-4">
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>Modo Online (Simulado)</AlertTitle>
+                <AlertDescription>
+                  Actualmente se están utilizando datos de ejemplo. La conexión real a la base de datos está pendiente.
+                </AlertDescription>
+              </Alert>
+          )}
           <div className="grid gap-4 md:grid-cols-3">
             <Skeleton className="h-28 rounded-lg" />
             <Skeleton className="h-28 rounded-lg" />
@@ -80,6 +107,15 @@ export default function DashboardPage() {
     <>
       <AppHeader title="Panel de Control" />
       <main className="flex-1 p-4 md:p-6 space-y-6">
+        {mode === 'online' && (
+          <Alert className="mb-4">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Modo Online (Simulado)</AlertTitle>
+            <AlertDescription>
+                Actualmente se están utilizando datos de ejemplo. La conexión real a la base de datos está pendiente. Puedes cambiar al modo offline en Configuración.
+            </AlertDescription>
+          </Alert>
+        )}
         <FinancialOverview totalIncome={totalIncome} totalExpenses={totalExpenses} />
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
