@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -22,6 +23,7 @@ interface BudgetItem {
 export function BudgetProgressCard({ categories, budgetGoals, transactions }: BudgetProgressCardProps) {
   const budgetItems: BudgetItem[] = budgetGoals.map(goal => {
     const category = categories.find(c => c.id === goal.categoryId);
+    // Solo considerar presupuestos para los cuales tenemos una categoría cargada
     if (!category) return null;
 
     const spent = transactions
@@ -42,7 +44,7 @@ export function BudgetProgressCard({ categories, budgetGoals, transactions }: Bu
           <CardDescription>Realiza un seguimiento de tus gastos en comparación con tus objetivos de presupuesto.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">Aún no se han establecido objetivos de presupuesto.</p>
+          <p className="text-muted-foreground">Aún no se han establecido objetivos de presupuesto o no hay categorías de gastos asociadas.</p>
         </CardContent>
       </Card>
     );
@@ -64,15 +66,27 @@ export function BudgetProgressCard({ categories, budgetGoals, transactions }: Bu
               </span>
               <div className="flex items-center space-x-2">
                 {item.overBudget && <AlertTriangle className="h-4 w-4 text-destructive" />}
-                <span className={`text-sm ${item.overBudget ? 'text-destructive' : 'text-muted-foreground'}`}>
+                <span className={`text-sm font-medium ${item.overBudget ? 'text-destructive' : 'text-muted-foreground'}`}>
                   CLP ${item.spent.toLocaleString('es-CL')} / CLP ${item.goal.toLocaleString('es-CL')}
                 </span>
               </div>
             </div>
-            <Progress value={item.progress} className={item.overBudget ? '[&>div]:bg-destructive' : ''} />
+            <Progress value={item.progress} className={`${item.overBudget ? '[&>div]:bg-destructive' : ''} h-3`} />
+            {item.overBudget && (
+              <p className="mt-1 text-xs text-destructive flex items-center">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                ¡Presupuesto excedido!
+              </p>
+            )}
+             {item.progress === 100 && !item.overBudget && (
+              <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                ¡Has alcanzado el límite de tu presupuesto!
+              </p>
+            )}
           </div>
         ))}
       </CardContent>
     </Card>
   );
 }
+
