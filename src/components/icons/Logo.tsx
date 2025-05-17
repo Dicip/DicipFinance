@@ -4,7 +4,7 @@ export function DicipFinanceLogo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 200 50" // Adjusted viewBox for a more horizontal layout
+      viewBox="0 0 220 50" // Adjusted viewBox width for a slightly wider aspect ratio
       aria-label="DicipFinance Logo"
       {...props}
     >
