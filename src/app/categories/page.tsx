@@ -53,18 +53,19 @@ export default function CategoriesPage() {
       return;
     }
     setIsLoading(true);
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       let loadedCategories: Category[];
       if (mode === 'online') {
-        console.log("CategoriesPage: MODO ONLINE. Lista de categorías inicialmente vacía.");
-        loadedCategories = []; // En modo online, las categorías deberían venir de la BD. Simular lista vacía.
+        console.log("CategoriesPage: MODO ONLINE. Lista de categorías inicialmente vacía, simulando carga desde BD.");
+        loadedCategories = []; // En modo online, las categorías deberían venir de la BD. Iniciar vacía.
       } else { // Offline mode
         console.log("CategoriesPage: MODO OFFLINE. Cargando categorías de demostración.");
         loadedCategories = mockCategoriesData.map((cat: Omit<Category, 'icon'>) => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
       }
       setCategories(loadedCategories);
       setIsLoading(false);
-    }, 100);
+    }, 500); // Simular carga de red
+     return () => clearTimeout(timer);
   }, [mode, dataModeInitialized]);
 
 
@@ -148,7 +149,7 @@ export default function CategoriesPage() {
             <Terminal className="h-4 w-4" />
             <AlertTitle>Modo de Datos</AlertTitle>
             <AlertDescription>
-              {mode === 'online' ? "Verificando categorías en Modo Online..." : "Cargando categorías de demostración en Modo Offline..."}
+              {mode === 'online' ? "Intentando conectar con la base de datos para categorías..." : "Cargando categorías de demostración en Modo Offline..."}
             </AlertDescription>
           </Alert>
           <Card>
@@ -178,9 +179,10 @@ export default function CategoriesPage() {
             <Terminal className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
             <AlertTitle>Modo Online Activo</AlertTitle>
             <AlertDescription>
-              En modo online, las categorías se obtendrían de una base de datos. 
-              Si no hay conexión o es una cuenta nueva, la lista estará vacía.
-              Puedes agregar y editar categorías, pero los cambios son simulados y no persistirán hasta que se implemente una base de datos real.
+              {categories.length === 0 && !isLoading
+                ? "Intentando conectar con la base de datos para categorías. Si es una cuenta nueva o no hay conexión, no se mostrarán datos. "
+                : "Las categorías se gestionan a través de la conexión online. "}
+              La funcionalidad completa de base de datos está pendiente de implementación. Las operaciones de agregar, editar y eliminar son simuladas y no persistirán.
             </AlertDescription>
           </Alert>
         )}
@@ -210,7 +212,7 @@ export default function CategoriesPage() {
             <CardDescription>
               {mode === 'offline' 
                 ? "Estas son las categorías de demostración. Las modificaciones no están permitidas."
-                : "Administra tus categorías de ingresos y gastos. Los cambios son simulados en modo online."}
+                : "Administra tus categorías de ingresos y gastos."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -220,7 +222,7 @@ export default function CategoriesPage() {
                 <TableCaption>
                   {mode === 'offline' 
                     ? "Categorías de demostración." 
-                    : categories.length > 0 ? "Categorías gestionadas (simuladas, no persistentes en modo online)." : "No hay categorías para mostrar."}
+                    : categories.length > 0 ? "Categorías gestionadas (operaciones simuladas en modo online)." : "No hay categorías para mostrar."}
                 </TableCaption>
                   <TableHeader>
                     <TableRow>
@@ -281,14 +283,14 @@ export default function CategoriesPage() {
                  {mode === 'online' && !isLoading && categories.length === 0 && (
                   <div className="flex flex-col items-center justify-center space-y-3">
                     <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
-                    <h3 className="text-xl font-semibold">No hay Categorías (Modo Online)</h3>
+                    <h3 className="text-xl font-semibold">No hay Categorías</h3>
                      <p className="text-muted-foreground">
-                      En modo online, las categorías se cargarían desde la base de datos. <br />
-                      Puedes agregar categorías, pero no se guardarán permanentemente en esta simulación.
+                      En modo online, las categorías se obtienen desde la base de datos. <br />
+                      Puedes agregar categorías para empezar. Los cambios son simulados y no persistirán.
                     </p>
                   </div>
                  )}
-                 {mode === 'offline' && !isLoading && categories.length === 0 && ( // Esto no debería pasar si mockCategoriesData tiene datos, ya que se cargan.
+                 {mode === 'offline' && !isLoading && categories.length === 0 && ( 
                    <div className="flex flex-col items-center justify-center space-y-3">
                     <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
                     <h3 className="text-xl font-semibold">No hay Categorías de Demostración</h3>
@@ -332,3 +334,6 @@ export default function CategoriesPage() {
     </>
   );
 }
+
+
+    

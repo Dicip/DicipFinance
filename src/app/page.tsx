@@ -29,20 +29,21 @@ export default function DashboardPage() {
 
     setIsLoading(true);
     const timer = setTimeout(() => {
+      // Categorías base se pueden cargar desde mock, el resto depende del modo.
+      const loadedBaseCategories = mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
+      setCategories(loadedBaseCategories);
+
       if (mode === 'online') {
         console.log("Dashboard: MODO ONLINE. Limpiando datos locales para simular carga desde BD.");
         setTransactions([]);
         setBudgetGoals([]);
-        // Categorías se cargan desde mock como base, simularía carga de BD.
-        setCategories(mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }))); 
       } else { // mode === 'offline'
         console.log("Dashboard: MODO OFFLINE. Cargando datos de demostración.");
         setTransactions(mockTransactionsData);
-        setCategories(mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette })));
         setBudgetGoals(mockBudgetGoalsData);
       }
       setIsLoading(false);
-    }, 100); 
+    }, 500); // Simular carga de red
     return () => clearTimeout(timer);
   }, [mode, dataModeInitialized]);
 
@@ -60,6 +61,7 @@ export default function DashboardPage() {
 
   const spendingByCategoryChartData: SpendingByCategory[] = useMemo(() => {
     return categories
+      .filter(c => c.type === 'expense') // Solo graficar categorías de gasto
       .map(category => {
         const categoryExpenses = transactions
           .filter(t => t.type === 'expense' && t.categoryId === category.id)
@@ -82,7 +84,7 @@ export default function DashboardPage() {
             <Terminal className="h-4 w-4" />
             <AlertTitle>Modo de Datos</AlertTitle>
             <AlertDescription>
-              {mode === 'online' ? "Intentando cargar datos en Modo Online..." : "Cargando datos de demostración en Modo Offline..."}
+              {mode === 'online' ? "Intentando conectar con la base de datos..." : "Cargando datos de demostración en Modo Offline..."}
             </AlertDescription>
           </Alert>
           <div className="grid gap-4 md:grid-cols-3">
@@ -110,10 +112,10 @@ export default function DashboardPage() {
             <Terminal className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
             <AlertTitle>Modo Online Activo</AlertTitle>
             <AlertDescription>
-              {transactions.length === 0 && !isLoading
+              {transactions.length === 0 && budgetGoals.length === 0 && !isLoading
                 ? "Intentando conectar con la base de datos. Si es una cuenta nueva o no hay conexión, no se mostrarán datos. "
                 : "Los datos se gestionan a través de la conexión online. "}
-              La funcionalidad completa de base de datos está pendiente de implementación.
+              La funcionalidad completa de base de datos está pendiente de implementación. Las operaciones son simuladas y no persistirán.
             </AlertDescription>
           </Alert>
         )}
@@ -129,23 +131,23 @@ export default function DashboardPage() {
         )}
 
 
-        {mode === 'online' && transactions.length === 0 && !isLoading && (
+        {mode === 'online' && transactions.length === 0 && budgetGoals.length === 0 && !isLoading && (
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center justify-center text-center space-y-3">
                 <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
                 <h3 className="text-xl font-semibold">No hay datos para mostrar</h3>
                 <p className="text-muted-foreground">
-                  En modo online, los datos se obtienen de la base de datos. <br />
-                  Asegúrate de tener conexión o verifica si ya has registrado transacciones.
+                  En modo online, los datos se obtienen desde la base de datos. <br />
+                  Asegúrate de tener conexión o verifica si ya has registrado información.
                 </p>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Mostrar contenido si estamos en modo offline, o si estamos en online Y hay transacciones (o se está cargando) */}
-        {(mode === 'offline' || (mode === 'online' && (transactions.length > 0 || isLoading))) && (
+        {/* Mostrar contenido si estamos en modo offline, o si estamos en online Y (hay transacciones O hay objetivos O se está cargando) */}
+        {(mode === 'offline' || (mode === 'online' && (transactions.length > 0 || budgetGoals.length > 0 || isLoading))) && (
           <>
             <FinancialOverview totalIncome={totalIncome} totalExpenses={totalExpenses} />
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
@@ -171,3 +173,6 @@ export default function DashboardPage() {
     </>
   );
 }
+
+
+    

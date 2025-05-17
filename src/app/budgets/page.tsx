@@ -66,27 +66,23 @@ export default function BudgetsPage() {
       return;
     }
     setIsLoading(true);
-    setTimeout(() => {
-      let loadedCategories: Category[];
-      let loadedTransactions: Transaction[];
-      let loadedBudgetGoals: BudgetGoal[];
-
+    const timer = setTimeout(() => {
+      // En modo online, las categorías base se podrían cargar desde mock, pero presupuestos y transacciones deben simularse vacíos
+      const loadedCategories = mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
+      setCategories(loadedCategories); // Usar categorías base para el diálogo
+      
       if (mode === 'online') {
-        console.log("BudgetsPage: MODO ONLINE. Usando categorías base. Presupuestos y transacciones se simularán vacíos.");
-        loadedCategories = mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
-        loadedTransactions = []; 
-        loadedBudgetGoals = [];  
+        console.log("BudgetsPage: MODO ONLINE. Lista de objetivos de presupuesto vacía, simulando carga desde BD.");
+        setTransactions([]); // Simular transacciones vacías desde BD
+        setBudgetGoals([]);  // Simular objetivos vacíos desde BD
       } else { // Offline mode
         console.log("BudgetsPage: MODO OFFLINE. Cargando datos de demostración.");
-        loadedCategories = mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
-        loadedTransactions = mockTransactionsData; 
-        loadedBudgetGoals = mockBudgetGoalsData;
+        setTransactions(mockTransactionsData); 
+        setBudgetGoals(mockBudgetGoalsData);
       }
-      setCategories(loadedCategories);
-      setTransactions(loadedTransactions);
-      setBudgetGoals(loadedBudgetGoals);
       setIsLoading(false);
-    }, 100);
+    }, 500); // Simular carga de red
+    return () => clearTimeout(timer);
   }, [mode, dataModeInitialized]);
 
 
@@ -133,8 +129,8 @@ export default function BudgetsPage() {
       const categoryName = categories.find(c => c.id === budgetToDelete.categoryId)?.name || "Desconocida";
       setBudgetGoals((prev) => prev.filter((b) => b.id !== budgetToDelete.id));
       setToastInfo({ 
-        title: "Objetivo de Presupuesto Eliminado", 
-        description: `El objetivo para "${categoryName}" ha sido eliminado.` 
+        title: "Objetivo de Presupuesto Eliminado (Simulado)", 
+        description: `El objetivo para "${categoryName}" ha sido eliminado (los cambios son locales en esta simulación).` 
       });
       setBudgetToDelete(null);
     }
@@ -153,16 +149,16 @@ export default function BudgetsPage() {
           updated = prev.map((b) =>
             b.id === editingBudget.id ? { ...editingBudget, ...data } : b
           );
-          toastTitle = "Objetivo de Presupuesto Actualizado";
-          toastDescription = `El objetivo para "${categoryName}" ha sido actualizado.`;
+          toastTitle = "Objetivo Actualizado (Simulado)";
+          toastDescription = `El objetivo para "${categoryName}" se actualizó (los cambios son locales).`;
         } else {
           const newBudgetGoal: BudgetGoal = {
             ...data,
             id: String(Date.now()), 
           };
           updated = [...prev, newBudgetGoal];
-          toastTitle = "Objetivo de Presupuesto Agregado";
-          toastDescription = `El objetivo para "${categoryName}" ha sido agregado.`;
+          toastTitle = "Objetivo Agregado (Simulado)";
+          toastDescription = `El objetivo para "${categoryName}" se agregó (los cambios son locales).`;
         }
         return updated;
       });
@@ -203,7 +199,7 @@ export default function BudgetsPage() {
             <Terminal className="h-4 w-4" />
             <AlertTitle>Modo de Datos</AlertTitle>
             <AlertDescription>
-              {mode === 'online' ? "Cargando presupuestos en Modo Online..." : "Cargando presupuestos de demostración en Modo Offline..."}
+              {mode === 'online' ? "Intentando conectar con la base de datos para presupuestos..." : "Cargando presupuestos de demostración en Modo Offline..."}
             </AlertDescription>
           </Alert>
           <Card>
@@ -245,7 +241,7 @@ export default function BudgetsPage() {
               {budgetDetails.length === 0 && !isLoading
                 ? "Intentando conectar con la base de datos para presupuestos. Si es una cuenta nueva o no hay conexión, no se mostrarán datos. "
                 : "Los datos de presupuestos se gestionan a través de la conexión online. "}
-              La funcionalidad completa de base de datos está pendiente de implementación. Las operaciones son simuladas.
+              La funcionalidad completa de base de datos está pendiente de implementación. Las operaciones son simuladas y no persistirán.
             </AlertDescription>
           </Alert>
         )}
@@ -255,7 +251,7 @@ export default function BudgetsPage() {
             <AlertTitle>Modo Offline (Demostración)</AlertTitle>
             <AlertDescription>
               Estás viendo objetivos de presupuesto de demostración. No puedes agregar, editar ni eliminar objetivos en este modo.
-              Cambia a Modo Online para gestionar tus propios presupuestos.
+              Cambia a Modo Online para gestionar tus propios presupuestos (funcionalidad de base de datos pendiente).
             </AlertDescription>
           </Alert>
         )}
@@ -334,12 +330,12 @@ export default function BudgetsPage() {
                     <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
                     <h3 className="text-xl font-semibold">No hay Objetivos de Presupuesto</h3>
                     <p className="text-muted-foreground">
-                      En modo online, los objetivos se cargan desde la base de datos. <br />
-                      Puedes agregar un nuevo objetivo o verificar tu conexión.
+                      En modo online, los objetivos se obtienen desde la base de datos. <br />
+                      Puedes agregar un nuevo objetivo para empezar o verificar tu conexión.
                     </p>
                   </div>
                  )}
-                 {mode === 'offline' && budgetGoals.length === 0 && ( // Check budgetGoals directly for offline if no processing needed
+                 {mode === 'offline' && budgetGoals.length === 0 && ( 
                    <p className="text-muted-foreground">No hay objetivos de presupuesto de demostración para mostrar.</p>
                  )}
               </div>
@@ -378,3 +374,6 @@ export default function BudgetsPage() {
     </>
   );
 }
+
+
+    

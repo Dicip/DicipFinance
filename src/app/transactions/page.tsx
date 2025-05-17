@@ -38,20 +38,20 @@ export default function TransactionsPage() {
     }
     setIsLoading(true);
     const timer = setTimeout(() => {
-      let loadedCategories: Category[];
+      // En modo online, las categorías base se pueden cargar, pero las transacciones deben simularse vacías.
+      const loadedBaseCategories = mockCategoriesData.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette }));
+      setCategories(loadedBaseCategories); // Usar categorías base para el diálogo y visualización
+
       if (mode === 'online') {
-        console.log("TransactionsPage: MODO ONLINE. Limpiando transacciones locales. Usando categorías base.");
-        setTransactions([]);
-        loadedCategories = mockCategoriesData.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette }));
+        console.log("TransactionsPage: MODO ONLINE. Lista de transacciones vacía, simulando carga desde BD.");
+        setTransactions([]); // Simular transacciones vacías desde BD
       } else { // mode === 'offline'
         console.log("TransactionsPage: MODO OFFLINE. Cargando transacciones y categorías de demostración.");
         setTransactions(mockTransactionsData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-        // En modo offline, siempre usamos las categorías de demostración.
-        loadedCategories = mockCategoriesData.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette }));
+        // En modo offline, las categorías también son las de demostración.
       }
-      setCategories(loadedCategories);
       setIsLoading(false);
-    }, 100); // Short delay
+    }, 500); // Simular carga de red
     return () => clearTimeout(timer);
   }, [mode, dataModeInitialized]);
 
@@ -63,7 +63,6 @@ export default function TransactionsPage() {
   };
 
   const handleAddTransaction = (data: { description: string; amount: number; type: 'income' | 'expense'; categoryId: string; date: Date }) => {
-    // Solo permitir agregar si estamos en modo online
     if (mode === 'online') {
       const newTransaction: Transaction = {
         id: String(Date.now()), 
@@ -78,6 +77,7 @@ export default function TransactionsPage() {
       );
       setIsAddTransactionOpen(false); 
     }
+    // No se permite agregar en modo offline, el botón estará oculto.
   };
 
   if (!dataModeInitialized || isLoading) {
@@ -89,13 +89,13 @@ export default function TransactionsPage() {
             <Terminal className="h-4 w-4" />
             <AlertTitle>Modo de Datos</AlertTitle>
             <AlertDescription>
-              {mode === 'online' ? "Intentando cargar datos en Modo Online..." : "Cargando datos de demostración en Modo Offline..."}
+              {mode === 'online' ? "Intentando conectar con la base de datos para transacciones..." : "Cargando transacciones de demostración en Modo Offline..."}
             </AlertDescription>
           </Alert>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Historial de Transacciones</CardTitle>
-              {mode === 'online' && <Skeleton className="h-10 w-48" />} {/* Skeleton for Add Button only in online mode */}
+              {mode === 'online' && <Skeleton className="h-10 w-48" />} 
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -123,9 +123,9 @@ export default function TransactionsPage() {
               <AlertTitle>Modo Online Activo</AlertTitle>
               <AlertDescription>
                 {transactions.length === 0 && !isLoading
-                  ? "Intentando conectar con la base de datos. Si es una cuenta nueva o no hay conexión, no se mostrarán datos. "
-                  : "Los datos se gestionan a través de la conexión online. "}
-                La funcionalidad completa de base de datos está pendiente de implementación.
+                  ? "Intentando conectar con la base de datos para transacciones. Si es una cuenta nueva o no hay conexión, no se mostrarán datos. "
+                  : "Las transacciones se gestionan a través de la conexión online. "}
+                La funcionalidad completa de base de datos está pendiente de implementación. Las operaciones de agregar son simuladas y no persistirán.
               </AlertDescription>
             </Alert>
           )}
@@ -134,8 +134,8 @@ export default function TransactionsPage() {
               <Terminal className="h-4 w-4 !text-yellow-600 dark:!text-yellow-400" />
               <AlertTitle>Modo Offline (Demostración)</AlertTitle>
               <AlertDescription>
-                Estás viendo datos de demostración. No puedes agregar, editar ni eliminar transacciones en este modo.
-                Cambia a Modo Online para gestionar tus propios datos (funcionalidad de base de datos pendiente).
+                Estás viendo transacciones de demostración. No puedes agregar, editar ni eliminar transacciones en este modo.
+                Cambia a Modo Online para gestionar tus propias transacciones (funcionalidad de base de datos pendiente).
               </AlertDescription>
             </Alert>
         )}
@@ -169,7 +169,7 @@ export default function TransactionsPage() {
                 <Table>
                   <TableCaption>
                     {mode === 'online' 
-                      ? "Una lista de tus transacciones recientes."
+                      ? transactions.length > 0 ? "Una lista de tus transacciones recientes (operaciones simuladas)." : "No hay transacciones para mostrar."
                       : "Una lista de transacciones de demostración."}
                   </TableCaption>
                   <TableHeader>
@@ -224,17 +224,17 @@ export default function TransactionsPage() {
               </div>
             ) : (
               <div className="text-center py-8">
-                 {mode === 'online' && !isLoading && (
+                 {mode === 'online' && !isLoading && transactions.length === 0 && (
                   <div className="flex flex-col items-center justify-center space-y-3">
                     <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
-                    <h3 className="text-xl font-semibold">No hay transacciones</h3>
+                    <h3 className="text-xl font-semibold">No hay Transacciones</h3>
                     <p className="text-muted-foreground">
-                      En modo online, las transacciones se cargan desde la base de datos. <br />
-                      Puedes agregar una nueva transacción o verificar tu conexión.
+                      En modo online, las transacciones se obtienen desde la base de datos. <br />
+                      Puedes agregar una nueva transacción para empezar o verificar tu conexión.
                     </p>
                   </div>
                  )}
-                 {mode === 'offline' && (
+                 {mode === 'offline' && !isLoading && transactions.length === 0 && (
                    <p className="text-muted-foreground">No hay transacciones de demostración para mostrar actualmente.</p>
                  )}
               </div>
@@ -245,3 +245,6 @@ export default function TransactionsPage() {
     </>
   );
 }
+
+
+    
