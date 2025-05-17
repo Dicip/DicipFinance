@@ -7,18 +7,18 @@ import { SpendingChart } from "@/components/dashboard/SpendingChart";
 import { BudgetProgressCard } from "@/components/dashboard/BudgetProgressCard";
 import { AiInsightsCard } from "@/components/dashboard/AiInsightsCard";
 import { AppHeader } from "@/components/layout/AppHeader";
-import { categories as mockCategories, transactions as mockTransactions, budgetGoals as mockBudgetGoals } from "@/lib/data";
+import { categories as mockCategoriesData, transactions as mockTransactionsData, budgetGoals as mockBudgetGoalsData, iconMap } from "@/lib/data";
 import type { Category, Transaction, BudgetGoal, SpendingByCategory } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDataMode } from "@/hooks/useDataMode";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, DatabaseBackup } from "lucide-react";
+import { Terminal, DatabaseBackup, Palette } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function DashboardPage() {
   const { mode, isInitialized: dataModeInitialized } = useDataMode();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>(mockCategories); // Categories are somewhat static
+  const [categories, setCategories] = useState<Category[]>([]); 
   const [budgetGoals, setBudgetGoals] = useState<BudgetGoal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -28,23 +28,21 @@ export default function DashboardPage() {
     }
 
     setIsLoading(true);
-    // Simulate data loading/clearing
     const timer = setTimeout(() => {
       if (mode === 'online') {
         console.log("Dashboard: MODO ONLINE. Limpiando datos locales para simular carga desde BD.");
         setTransactions([]);
         setBudgetGoals([]);
-        // Categories can remain as they are more structural or could also be fetched
-        setCategories(mockCategories); 
-        // In a real app, you would initiate Firebase fetch here.
+        // Categorías se cargan desde mock como base, simularía carga de BD.
+        setCategories(mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }))); 
       } else { // mode === 'offline'
-        console.log("Dashboard: MODO OFFLINE. Cargando datos locales.");
-        setTransactions(mockTransactions);
-        setCategories(mockCategories);
-        setBudgetGoals(mockBudgetGoals);
+        console.log("Dashboard: MODO OFFLINE. Cargando datos de demostración.");
+        setTransactions(mockTransactionsData);
+        setCategories(mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette })));
+        setBudgetGoals(mockBudgetGoalsData);
       }
       setIsLoading(false);
-    }, 100); // Short delay to mimic async operation and allow UI to update
+    }, 100); 
     return () => clearTimeout(timer);
   }, [mode, dataModeInitialized]);
 
@@ -84,7 +82,7 @@ export default function DashboardPage() {
             <Terminal className="h-4 w-4" />
             <AlertTitle>Modo de Datos</AlertTitle>
             <AlertDescription>
-              {mode === 'online' ? "Intentando cargar datos en Modo Online..." : "Cargando datos en Modo Offline..."}
+              {mode === 'online' ? "Intentando cargar datos en Modo Online..." : "Cargando datos de demostración en Modo Offline..."}
             </AlertDescription>
           </Alert>
           <div className="grid gap-4 md:grid-cols-3">
@@ -119,6 +117,17 @@ export default function DashboardPage() {
             </AlertDescription>
           </Alert>
         )}
+        {mode === 'offline' && (
+          <Alert className="mb-4 border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300">
+            <Terminal className="h-4 w-4 !text-yellow-600 dark:!text-yellow-400" />
+            <AlertTitle>Modo Offline (Demostración)</AlertTitle>
+            <AlertDescription>
+                Estás viendo datos de demostración. Las modificaciones no están permitidas en este modo.
+                Cambia a Modo Online para gestionar tus propios datos (funcionalidad de base de datos pendiente).
+            </AlertDescription>
+          </Alert>
+        )}
+
 
         {mode === 'online' && transactions.length === 0 && !isLoading && (
           <Card>
@@ -135,7 +144,8 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {(mode === 'offline' || (mode === 'online' && transactions.length > 0)) && (
+        {/* Mostrar contenido si estamos en modo offline, o si estamos en online Y hay transacciones (o se está cargando) */}
+        {(mode === 'offline' || (mode === 'online' && (transactions.length > 0 || isLoading))) && (
           <>
             <FinancialOverview totalIncome={totalIncome} totalExpenses={totalExpenses} />
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">

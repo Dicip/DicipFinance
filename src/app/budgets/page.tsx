@@ -12,15 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableCaption,
-} from "@/components/ui/table";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -31,21 +22,25 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
-import { PlusCircle, Edit, Trash2, Palette, AlertTriangle, DatabaseBackup } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Palette, AlertTriangle, DatabaseBackup, Terminal } from "lucide-react";
 import type { Category, BudgetGoal, Transaction } from "@/lib/types";
-import { categories as mockCategories, transactions as mockTransactions, budgetGoals as mockBudgetGoals, iconMap } from "@/lib/data";
+import { 
+    categories as mockCategoriesData, 
+    transactions as mockTransactionsData, 
+    budgetGoals as mockBudgetGoalsData, 
+    iconMap 
+} from "@/lib/data";
 import { AddEditBudgetDialog } from "@/components/budgets/AddEditBudgetDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useDataMode } from "@/hooks/useDataMode";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
 
 export default function BudgetsPage() {
   const { mode, isInitialized: dataModeInitialized } = useDataMode();
   const [budgetGoals, setBudgetGoals] = useState<BudgetGoal[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]); // Needed to calculate spent amounts
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<BudgetGoal | null>(null);
@@ -63,26 +58,15 @@ export default function BudgetsPage() {
       let loadedBudgetGoals: BudgetGoal[];
 
       if (mode === 'online') {
-        loadedCategories = mockCategories.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
-        loadedTransactions = []; // In online mode, transactions would be fetched
-        loadedBudgetGoals = [];  // In online mode, budget goals would be fetched
+        console.log("BudgetsPage: MODO ONLINE. Limpiando datos locales. Usando categorías base.");
+        loadedCategories = mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
+        loadedTransactions = []; // En online mode, transactions vendrían de la BD
+        loadedBudgetGoals = [];  // En online mode, budget goals vendrían de la BD
       } else { // Offline mode
-        const storedCategories = localStorage.getItem('customCategories');
-        if (storedCategories) {
-          loadedCategories = JSON.parse(storedCategories).map((cat: Omit<Category, 'icon'>) => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
-        } else {
-          loadedCategories = mockCategories.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
-        }
-        setCategories(loadedCategories);
-
-        loadedTransactions = mockTransactions; // Use mock transactions for offline mode for now
-
-        const storedBudgetGoals = localStorage.getItem('customBudgetGoals');
-        if (storedBudgetGoals) {
-          loadedBudgetGoals = JSON.parse(storedBudgetGoals);
-        } else {
-          loadedBudgetGoals = mockBudgetGoals;
-        }
+        console.log("BudgetsPage: MODO OFFLINE. Cargando datos de demostración.");
+        loadedCategories = mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
+        loadedTransactions = mockTransactionsData; 
+        loadedBudgetGoals = mockBudgetGoalsData;
       }
       setCategories(loadedCategories);
       setTransactions(loadedTransactions);
@@ -91,64 +75,62 @@ export default function BudgetsPage() {
     }, 100);
   }, [mode, dataModeInitialized]);
 
-  const saveBudgetGoalsToLocalStorage = (updatedBudgetGoals: BudgetGoal[]) => {
-    localStorage.setItem('customBudgetGoals', JSON.stringify(updatedBudgetGoals));
-  };
 
   const handleAddBudget = () => {
-    setEditingBudget(null);
-    setIsDialogOpen(true);
+    if (mode === 'online') {
+      setEditingBudget(null);
+      setIsDialogOpen(true);
+    }
   };
 
   const handleEditBudget = (budget: BudgetGoal) => {
-    setEditingBudget(budget);
-    setIsDialogOpen(true);
+    if (mode === 'online') {
+      setEditingBudget(budget);
+      setIsDialogOpen(true);
+    }
   };
 
   const handleDeleteBudget = (budget: BudgetGoal) => {
-    setBudgetToDelete(budget);
+    if (mode === 'online') {
+      setBudgetToDelete(budget);
+    }
   };
 
   const confirmDelete = () => {
-    if (budgetToDelete) {
-      setBudgetGoals((prev) => {
-        const updated = prev.filter((b) => b.id !== budgetToDelete.id);
-        if (mode === 'offline') {
-          saveBudgetGoalsToLocalStorage(updated);
-        }
-        return updated;
-      });
-      toast({ title: "Objetivo de Presupuesto Eliminado", description: `El objetivo para la categoría ha sido eliminado.` });
+    if (budgetToDelete && mode === 'online') {
+      setBudgetGoals((prev) => prev.filter((b) => b.id !== budgetToDelete.id));
+      toast({ title: "Objetivo de Presupuesto Eliminado (Simulado)", description: `El objetivo para la categoría ha sido eliminado (en modo online simulado).` });
       setBudgetToDelete(null);
+      // En una app real, aquí se llamaría a la función para eliminar de Firebase/BD
     }
   };
 
   const handleSubmitDialog = (data: Omit<BudgetGoal, 'id'> & { id?: string }) => {
-    setBudgetGoals((prev) => {
-      let updated;
-      const category = categories.find(c => c.id === data.categoryId);
-      const categoryName = category?.name || 'Desconocida';
+    if (mode === 'online') {
+      setBudgetGoals((prev) => {
+        let updated;
+        const category = categories.find(c => c.id === data.categoryId);
+        const categoryName = category?.name || 'Desconocida';
 
-      if (editingBudget) {
-        updated = prev.map((b) =>
-          b.id === editingBudget.id ? { ...editingBudget, ...data } : b
-        );
-        toast({ title: "Objetivo de Presupuesto Actualizado", description: `El objetivo para "${categoryName}" ha sido actualizado.` });
-      } else {
-        const newBudgetGoal: BudgetGoal = {
-          ...data,
-          id: String(Date.now()), // Simple ID generation
-        };
-        updated = [...prev, newBudgetGoal];
-        toast({ title: "Objetivo de Presupuesto Agregado", description: `El objetivo para "${categoryName}" ha sido agregado.` });
-      }
-      if (mode === 'offline') {
-        saveBudgetGoalsToLocalStorage(updated);
-      }
-      return updated;
-    });
-    setIsDialogOpen(false);
-    setEditingBudget(null);
+        if (editingBudget) {
+          updated = prev.map((b) =>
+            b.id === editingBudget.id ? { ...editingBudget, ...data } : b
+          );
+          toast({ title: "Objetivo de Presupuesto Actualizado (Simulado)", description: `El objetivo para "${categoryName}" ha sido actualizado (en modo online simulado).` });
+        } else {
+          const newBudgetGoal: BudgetGoal = {
+            ...data,
+            id: String(Date.now()), 
+          };
+          updated = [...prev, newBudgetGoal];
+          toast({ title: "Objetivo de Presupuesto Agregado (Simulado)", description: `El objetivo para "${categoryName}" ha sido agregado (en modo online simulado).` });
+        }
+        // En una app real, aquí se llamaría a la función para guardar en Firebase/BD
+        return updated;
+      });
+      setIsDialogOpen(false);
+      setEditingBudget(null);
+    }
   };
 
   const budgetDetails = useMemo(() => {
@@ -182,7 +164,7 @@ export default function BudgetsPage() {
             <Terminal className="h-4 w-4" />
             <AlertTitle>Modo de Datos</AlertTitle>
             <AlertDescription>
-              {mode === 'online' ? "Cargando presupuestos en Modo Online..." : "Cargando presupuestos en Modo Offline..."}
+              {mode === 'online' ? "Cargando presupuestos en Modo Online..." : "Cargando presupuestos de demostración en Modo Offline..."}
             </AlertDescription>
           </Alert>
           <Card>
@@ -191,7 +173,7 @@ export default function BudgetsPage() {
                 <CardTitle>Gestionar Presupuestos</CardTitle>
                 <CardDescription>Define y sigue tus objetivos de gasto mensuales.</CardDescription>
               </div>
-              <Skeleton className="h-10 w-52" /> {/* Skeleton for Add Button */}
+              { mode === 'online' && <Skeleton className="h-10 w-52" />} {/* Skeleton for Add Button */}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -228,19 +210,33 @@ export default function BudgetsPage() {
             </AlertDescription>
           </Alert>
         )}
+         {mode === 'offline' && (
+          <Alert className="mb-4 border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300">
+            <Terminal className="h-4 w-4 !text-yellow-600 dark:!text-yellow-400" />
+            <AlertTitle>Modo Offline (Demostración)</AlertTitle>
+            <AlertDescription>
+              Estás viendo objetivos de presupuesto de demostración. No puedes agregar, editar ni eliminar objetivos en este modo.
+              Cambia a Modo Online para gestionar tus propios presupuestos (funcionalidad de base de datos pendiente).
+            </AlertDescription>
+          </Alert>
+        )}
 
-        <div className="flex justify-end mb-4">
-          <Button onClick={handleAddBudget}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Agregar Objetivo de Presupuesto
-          </Button>
-        </div>
+        {mode === 'online' && (
+            <div className="flex justify-end mb-4">
+            <Button onClick={handleAddBudget}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Agregar Objetivo de Presupuesto
+            </Button>
+            </div>
+        )}
 
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Mis Objetivos de Presupuesto</CardTitle>
             <CardDescription>
-              Define y sigue tus objetivos de gasto mensuales por categoría.
+              {mode === 'offline' 
+                ? "Objetivos de presupuesto de demostración." 
+                : "Define y sigue tus objetivos de gasto mensuales por categoría."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -255,16 +251,18 @@ export default function BudgetsPage() {
                           <IconComponent className="h-6 w-6 mr-3" style={{ color: budget.categoryColor }} />
                           <span className="text-lg font-semibold">{budget.categoryName}</span>
                         </div>
-                        <div className="space-x-2">
-                           <Button variant="outline" size="icon" onClick={() => handleEditBudget(budget)}>
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Editar</span>
-                          </Button>
-                          <Button variant="destructive" size="icon" onClick={() => handleDeleteBudget(budget)}>
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Eliminar</span>
-                          </Button>
-                        </div>
+                        {mode === 'online' && (
+                            <div className="space-x-2">
+                            <Button variant="outline" size="icon" onClick={() => handleEditBudget(budget)}>
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Editar</span>
+                            </Button>
+                            <Button variant="destructive" size="icon" onClick={() => handleDeleteBudget(budget)}>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Eliminar</span>
+                            </Button>
+                            </div>
+                        )}
                       </div>
                       <div className="mb-1 flex items-center justify-between text-sm">
                         <span className={`${budget.overBudget ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
@@ -303,7 +301,7 @@ export default function BudgetsPage() {
                   </div>
                  )}
                  {mode === 'offline' && budgetDetails.length === 0 && (
-                   <p className="text-muted-foreground">No hay objetivos de presupuesto para mostrar. ¡Agrega uno nuevo!</p>
+                   <p className="text-muted-foreground">No hay objetivos de presupuesto de demostración para mostrar.</p>
                  )}
               </div>
             )}
@@ -311,16 +309,18 @@ export default function BudgetsPage() {
         </Card>
       </main>
 
-      <AddEditBudgetDialog
-        isOpen={isDialogOpen}
-        setIsOpen={setIsDialogOpen}
-        onSubmit={handleSubmitDialog}
-        budget={editingBudget}
-        categories={expenseCategories}
-        existingBudgetCategoryIds={budgetGoals.map(bg => bg.categoryId)}
-      />
+      {mode === 'online' && (
+        <AddEditBudgetDialog
+            isOpen={isDialogOpen}
+            setIsOpen={setIsDialogOpen}
+            onSubmit={handleSubmitDialog}
+            budget={editingBudget}
+            categories={expenseCategories}
+            existingBudgetCategoryIds={budgetGoals.map(bg => bg.categoryId)}
+        />
+      )}
 
-      {budgetToDelete && (
+      {mode === 'online' && budgetToDelete && (
          <AlertDialog open={!!budgetToDelete} onOpenChange={() => setBudgetToDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>

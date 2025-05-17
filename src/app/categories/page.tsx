@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { PlusCircle, Edit, Trash2, Palette, DatabaseBackup, Terminal } from "lucide-react";
 import type { Category } from "@/lib/types";
-import { categories as mockCategories, iconMap } from "@/lib/data"; // mockCategories se usa como fallback si localStorage está vacío en offline
+import { categories as mockCategoriesData, iconMap } from "@/lib/data";
 import { AddEditCategoryDialog } from "@/components/categories/AddEditCategoryDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useDataMode } from "@/hooks/useDataMode";
@@ -56,77 +56,73 @@ export default function CategoriesPage() {
     setTimeout(() => {
       let loadedCategories: Category[];
       if (mode === 'online') {
-        // En modo online, simular que no hay categorías desde la BD.
+        // En modo online, simular que no hay categorías desde la BD inicialmente.
         loadedCategories = []; 
+        // En una app real, aquí se haría fetch a Firebase/BD
       } else { // Offline mode
-        const storedCategories = localStorage.getItem('customCategories');
-         if (storedCategories) {
-          loadedCategories = JSON.parse(storedCategories).map((cat: Omit<Category, 'icon'>) => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
-        } else {
-          // Si no hay nada en localStorage en modo offline, la lista se muestra vacía.
-          loadedCategories = []; 
-        }
+        // En modo offline, siempre usamos las categorías de demostración.
+        console.log("CategoriesPage: MODO OFFLINE. Cargando categorías de demostración.");
+        loadedCategories = mockCategoriesData.map((cat: Omit<Category, 'icon'>) => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
       }
       setCategories(loadedCategories);
       setIsLoading(false);
     }, 100);
   }, [mode, dataModeInitialized]);
 
-  const saveCategoriesToLocalStorage = (updatedCategories: Category[]) => {
-    if (mode === 'offline') { // Solo guardar en localStorage si estamos en modo offline
-      const storableCategories = updatedCategories.map(({ icon, ...rest }) => rest);
-      localStorage.setItem('customCategories', JSON.stringify(storableCategories));
+
+  const handleAddCategory = () => {
+    if (mode === 'online') {
+      setEditingCategory(null);
+      setIsDialogOpen(true);
     }
   };
 
-  const handleAddCategory = () => {
-    setEditingCategory(null);
-    setIsDialogOpen(true);
-  };
-
   const handleEditCategory = (category: Category) => {
-    setEditingCategory(category);
-    setIsDialogOpen(true);
+    if (mode === 'online') {
+      setEditingCategory(category);
+      setIsDialogOpen(true);
+    }
   };
 
   const handleDeleteCategory = (category: Category) => {
-    setCategoryToDelete(category);
+    if (mode === 'online') {
+      setCategoryToDelete(category);
+    }
   };
 
   const confirmDelete = () => {
-    if (categoryToDelete) {
-      setCategories((prev) => {
-        const updated = prev.filter((c) => c.id !== categoryToDelete.id);
-        saveCategoriesToLocalStorage(updated); 
-        return updated;
-      });
-      toast({ title: "Categoría Eliminada", description: `La categoría "${categoryToDelete.name}" ha sido eliminada.` });
+    if (categoryToDelete && mode === 'online') {
+      setCategories((prev) => prev.filter((c) => c.id !== categoryToDelete.id));
+      toast({ title: "Categoría Eliminada (Simulado)", description: `La categoría "${categoryToDelete.name}" ha sido eliminada (en modo online simulado).` });
       setCategoryToDelete(null);
+      // En una app real, aquí se llamaría a la función para eliminar de Firebase/BD
     }
   };
 
   const handleSubmitDialog = (data: Omit<Category, 'id' | 'icon'> & { id?: string }) => {
-    setCategories((prev) => {
-      let updated;
-      if (editingCategory) {
-        updated = prev.map((c) =>
-          c.id === editingCategory.id ? { ...c, ...data, icon: iconMap[data.iconName] || Palette } : c
-        );
-        toast({ title: "Categoría Actualizada", description: `La categoría "${data.name}" ha sido actualizada.` });
-      } else {
-        const newCategory: Category = {
-          ...data,
-          id: String(Date.now()), 
-          icon: iconMap[data.iconName] || Palette,
-        };
-        updated = [...prev, newCategory];
-        toast({ title: "Categoría Agregada", description: `La categoría "${data.name}" ha sido agregada.` });
-      }
-      saveCategoriesToLocalStorage(updated); 
-      return updated;
-    });
-    setIsDialogOpen(false);
-    setEditingCategory(null);
+    if (mode === 'online') {
+      setCategories((prev) => {
+        let updated;
+        if (editingCategory) {
+          updated = prev.map((c) =>
+            c.id === editingCategory.id ? { ...c, ...data, icon: iconMap[data.iconName] || Palette } : c
+          );
+          toast({ title: "Categoría Actualizada (Simulado)", description: `La categoría "${data.name}" ha sido actualizada (en modo online simulado).` });
+        } else {
+          const newCategory: Category = {
+            ...data,
+            id: String(Date.now()), 
+            icon: iconMap[data.iconName] || Palette,
+          };
+          updated = [...prev, newCategory];
+          toast({ title: "Categoría Agregada (Simulado)", description: `La categoría "${data.name}" ha sido agregada (en modo online simulado).` });
+        }
+        // En una app real, aquí se llamaría a la función para guardar en Firebase/BD
+        return updated;
+      });
+      setIsDialogOpen(false);
+      setEditingCategory(null);
+    }
   };
 
   if (!dataModeInitialized || isLoading) {
@@ -138,13 +134,13 @@ export default function CategoriesPage() {
             <Terminal className="h-4 w-4" />
             <AlertTitle>Modo de Datos</AlertTitle>
             <AlertDescription>
-              {mode === 'online' ? "Verificando categorías en Modo Online..." : "Cargando categorías en Modo Offline..."}
+              {mode === 'online' ? "Verificando categorías en Modo Online..." : "Cargando categorías de demostración en Modo Offline..."}
             </AlertDescription>
           </Alert>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Gestionar Categorías</CardTitle>
-              <Skeleton className="h-10 w-48" /> 
+              {mode === 'online' && <Skeleton className="h-10 w-48" />} 
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -168,26 +164,38 @@ export default function CategoriesPage() {
             <Terminal className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
             <AlertTitle>Modo Online Activo</AlertTitle>
             <AlertDescription>
-              En modo online, las categorías se obtendrían de una base de datos. Actualmente, no hay categorías cargadas.
-              Las modificaciones aquí no son persistentes hasta que se implemente una base de datos real.
-              Para gestionar categorías persistentes localmente, cambia a Modo Offline.
+              En modo online, las categorías se obtendrían de una base de datos.
+              Puedes agregar y editar categorías, pero los cambios son simulados y no persistirán hasta que se implemente una base de datos real.
+            </AlertDescription>
+          </Alert>
+        )}
+        {mode === 'offline' && (
+          <Alert className="mb-4 border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300">
+            <Terminal className="h-4 w-4 !text-yellow-600 dark:!text-yellow-400" />
+            <AlertTitle>Modo Offline (Demostración)</AlertTitle>
+            <AlertDescription>
+              Estás viendo categorías de demostración. No puedes agregar, editar ni eliminar categorías en este modo.
+              Cambia a Modo Online para gestionar tus propias categorías (funcionalidad de base de datos pendiente).
             </AlertDescription>
           </Alert>
         )}
 
-        <div className="flex justify-end mb-4">
-          <Button onClick={handleAddCategory}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Agregar Nueva Categoría
-          </Button>
-        </div>
+        {mode === 'online' && (
+          <div className="flex justify-end mb-4">
+            <Button onClick={handleAddCategory}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Agregar Nueva Categoría
+            </Button>
+          </div>
+        )}
 
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Lista de Categorías</CardTitle>
             <CardDescription>
-              Administra tus categorías de ingresos y gastos.
-              {mode === 'offline' ? " Los cambios se guardan localmente en tu navegador." : " En modo online, los cambios no son persistentes."}
+              {mode === 'offline' 
+                ? "Estas son las categorías de demostración. Las modificaciones no están permitidas."
+                : "Administra tus categorías de ingresos y gastos. Los cambios son simulados en modo online."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -196,8 +204,8 @@ export default function CategoriesPage() {
                 <Table>
                 <TableCaption>
                   {mode === 'offline' 
-                    ? "Tus categorías personalizadas guardadas localmente." 
-                    : "Categorías (no persistentes en modo online)."}
+                    ? "Categorías de demostración." 
+                    : "Categorías (simuladas, no persistentes en modo online)."}
                 </TableCaption>
                   <TableHeader>
                     <TableRow>
@@ -205,7 +213,7 @@ export default function CategoriesPage() {
                       <TableHead>Nombre</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Color</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
+                      {mode === 'online' && <TableHead className="text-right">Acciones</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -235,16 +243,18 @@ export default function CategoriesPage() {
                               {category.color}
                             </div>
                           </TableCell>
-                          <TableCell className="text-right space-x-2">
-                            <Button variant="outline" size="icon" onClick={() => handleEditCategory(category)}>
-                              <Edit className="h-4 w-4" />
-                              <span className="sr-only">Editar</span>
-                            </Button>
-                            <Button variant="destructive" size="icon" onClick={() => handleDeleteCategory(category)}>
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Eliminar</span>
-                            </Button>
-                          </TableCell>
+                          {mode === 'online' && (
+                            <TableCell className="text-right space-x-2">
+                              <Button variant="outline" size="icon" onClick={() => handleEditCategory(category)}>
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Editar</span>
+                              </Button>
+                              <Button variant="destructive" size="icon" onClick={() => handleDeleteCategory(category)}>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Eliminar</span>
+                              </Button>
+                            </TableCell>
+                          )}
                         </TableRow>
                       );
                     })}
@@ -256,21 +266,19 @@ export default function CategoriesPage() {
                  {mode === 'online' && !isLoading && categories.length === 0 && (
                   <div className="flex flex-col items-center justify-center space-y-3">
                     <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
-                    <h3 className="text-xl font-semibold">No hay Categorías en la Base de Datos</h3>
+                    <h3 className="text-xl font-semibold">No hay Categorías en la Base de Datos (Simulado)</h3>
                      <p className="text-muted-foreground">
-                      En modo online, las categorías se cargan desde la base de datos. <br />
-                      Parece que no hay categorías configuradas o no se pudo establecer conexión. <br />
+                      En modo online, las categorías se cargarían desde la base de datos. <br />
                       Puedes agregar categorías, pero no se guardarán permanentemente en esta simulación.
                     </p>
                   </div>
                  )}
-                 {mode === 'offline' && !isLoading && categories.length === 0 && (
+                 {mode === 'offline' && !isLoading && categories.length === 0 && ( // Esto no debería pasar si mockCategoriesData tiene datos
                    <div className="flex flex-col items-center justify-center space-y-3">
                     <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
-                    <h3 className="text-xl font-semibold">No hay Categorías Guardadas Localmente</h3>
+                    <h3 className="text-xl font-semibold">No hay Categorías de Demostración</h3>
                     <p className="text-muted-foreground">
-                      Estás en modo offline. No se encontraron categorías guardadas en tu navegador. <br />
-                      ¡Agrega una nueva categoría para comenzar! Se guardará localmente.
+                      No se encontraron categorías de demostración.
                     </p>
                   </div>
                  )}
@@ -280,22 +288,23 @@ export default function CategoriesPage() {
         </Card>
       </main>
 
-      <AddEditCategoryDialog
-        isOpen={isDialogOpen}
-        setIsOpen={setIsDialogOpen}
-        onSubmit={handleSubmitDialog}
-        category={editingCategory}
-      />
+      {mode === 'online' && (
+        <AddEditCategoryDialog
+          isOpen={isDialogOpen}
+          setIsOpen={setIsDialogOpen}
+          onSubmit={handleSubmitDialog}
+          category={editingCategory}
+        />
+      )}
 
-      {categoryToDelete && (
+      {mode === 'online' && categoryToDelete && (
          <AlertDialog open={!!categoryToDelete} onOpenChange={() => setCategoryToDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>¿Estás seguro de eliminar esta categoría?</AlertDialogTitle>
               <AlertDialogDescription>
                 Esta acción no se puede deshacer. Se eliminará la categoría "{categoryToDelete.name}".
-                Asegúrate de que ninguna transacción o presupuesto esté utilizando esta categoría.
-                {mode === 'online' && " (Esta acción no afectará la base de datos en la versión actual)."}
+                (Esta acción no afectará la base de datos en la versión actual).
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

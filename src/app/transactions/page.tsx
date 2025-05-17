@@ -15,7 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { categories as mockCategories, transactions as mockTransactions, iconMap } from "@/lib/data";
+import { categories as mockCategoriesData, transactions as mockTransactionsData, iconMap } from "@/lib/data";
 import type { Category, Transaction } from "@/lib/types";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -42,19 +42,12 @@ export default function TransactionsPage() {
       if (mode === 'online') {
         console.log("TransactionsPage: MODO ONLINE. Limpiando transacciones locales. Usando categorías base.");
         setTransactions([]);
-        // En modo online, por ahora, usamos las categorías mock como base,
-        // ya que las personalizadas son locales. En una app real, se cargarían desde BD.
-        loadedCategories = mockCategories.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette }));
+        loadedCategories = mockCategoriesData.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette }));
       } else { // mode === 'offline'
-        console.log("TransactionsPage: MODO OFFLINE. Cargando transacciones y categorías locales.");
-        setTransactions(mockTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-        
-        const storedCategories = localStorage.getItem('customCategories');
-        if (storedCategories) {
-          loadedCategories = JSON.parse(storedCategories).map((cat: Omit<Category, 'icon'>) => ({...cat, icon: iconMap[cat.iconName] || Palette }));
-        } else {
-          loadedCategories = mockCategories.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette }));
-        }
+        console.log("TransactionsPage: MODO OFFLINE. Cargando transacciones y categorías de demostración.");
+        setTransactions(mockTransactionsData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        // En modo offline, siempre usamos las categorías de demostración.
+        loadedCategories = mockCategoriesData.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette }));
       }
       setCategories(loadedCategories);
       setIsLoading(false);
@@ -70,20 +63,21 @@ export default function TransactionsPage() {
   };
 
   const handleAddTransaction = (data: { description: string; amount: number; type: 'income' | 'expense'; categoryId: string; date: Date }) => {
-    const newTransaction: Transaction = {
-      id: String(Date.now()), 
-      description: data.description,
-      amount: data.amount,
-      type: data.type,
-      categoryId: data.categoryId,
-      date: data.date.toISOString(),
-    };
-    // En modo online, esto idealmente se enviaría a Firebase.
-    // Por ahora, actualiza el estado local que se borrará en la próxima 'carga' online o cambio de modo.
-    setTransactions(prevTransactions =>
-      [newTransaction, ...prevTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    );
-    setIsAddTransactionOpen(false); 
+    // Solo permitir agregar si estamos en modo online
+    if (mode === 'online') {
+      const newTransaction: Transaction = {
+        id: String(Date.now()), 
+        description: data.description,
+        amount: data.amount,
+        type: data.type,
+        categoryId: data.categoryId,
+        date: data.date.toISOString(),
+      };
+      setTransactions(prevTransactions =>
+        [newTransaction, ...prevTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      );
+      setIsAddTransactionOpen(false); 
+    }
   };
 
   if (!dataModeInitialized || isLoading) {
@@ -95,13 +89,13 @@ export default function TransactionsPage() {
             <Terminal className="h-4 w-4" />
             <AlertTitle>Modo de Datos</AlertTitle>
             <AlertDescription>
-              {mode === 'online' ? "Intentando cargar datos en Modo Online..." : "Cargando datos en Modo Offline..."}
+              {mode === 'online' ? "Intentando cargar datos en Modo Online..." : "Cargando datos de demostración en Modo Offline..."}
             </AlertDescription>
           </Alert>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Historial de Transacciones</CardTitle>
-              <Skeleton className="h-10 w-48" /> {/* Skeleton for Add Button */}
+              {mode === 'online' && <Skeleton className="h-10 w-48" />} {/* Skeleton for Add Button only in online mode */}
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -131,25 +125,39 @@ export default function TransactionsPage() {
                 {transactions.length === 0 && !isLoading
                   ? "Intentando conectar con la base de datos. Si es una cuenta nueva o no hay conexión, no se mostrarán datos. "
                   : "Los datos se gestionan a través de la conexión online. "}
-                La funcionalidad completa de base de datos está pendiente de implementación. Las categorías personalizadas locales no se usan en este modo.
+                La funcionalidad completa de base de datos está pendiente de implementación.
               </AlertDescription>
             </Alert>
           )}
+        {mode === 'offline' && (
+            <Alert className="mb-4 border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300">
+              <Terminal className="h-4 w-4 !text-yellow-600 dark:!text-yellow-400" />
+              <AlertTitle>Modo Offline (Demostración)</AlertTitle>
+              <AlertDescription>
+                Estás viendo datos de demostración. No puedes agregar, editar ni eliminar transacciones en este modo.
+                Cambia a Modo Online para gestionar tus propios datos (funcionalidad de base de datos pendiente).
+              </AlertDescription>
+            </Alert>
+        )}
         
-        <div className="flex justify-end mb-4">
-          <Button onClick={() => setIsAddTransactionOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Agregar Nueva Transacción
-          </Button>
-        </div>
+        {mode === 'online' && (
+          <div className="flex justify-end mb-4">
+            <Button onClick={() => setIsAddTransactionOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Agregar Nueva Transacción
+            </Button>
+          </div>
+        )}
 
-        <AddTransactionDialog
-          isOpen={isAddTransactionOpen}
-          setIsOpen={setIsAddTransactionOpen}
-          onAddTransaction={handleAddTransaction}
-          categories={expenseCategories} 
-          incomeCategories={incomeCategories}
-        />
+        {mode === 'online' && (
+          <AddTransactionDialog
+            isOpen={isAddTransactionOpen}
+            setIsOpen={setIsAddTransactionOpen}
+            onAddTransaction={handleAddTransaction}
+            categories={expenseCategories} 
+            incomeCategories={incomeCategories}
+          />
+        )}
 
         <Card className="shadow-lg">
           <CardHeader>
@@ -159,7 +167,11 @@ export default function TransactionsPage() {
             {transactions.length > 0 ? (
               <div className="overflow-x-auto">
                 <Table>
-                  <TableCaption>Una lista de tus transacciones recientes.</TableCaption>
+                  <TableCaption>
+                    {mode === 'online' 
+                      ? "Una lista de tus transacciones recientes."
+                      : "Una lista de transacciones de demostración."}
+                  </TableCaption>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Fecha</TableHead>
@@ -223,7 +235,7 @@ export default function TransactionsPage() {
                   </div>
                  )}
                  {mode === 'offline' && (
-                   <p className="text-muted-foreground">No hay transacciones para mostrar en modo offline. ¡Agrega una nueva!</p>
+                   <p className="text-muted-foreground">No hay transacciones de demostración para mostrar actualmente.</p>
                  )}
               </div>
             )}
