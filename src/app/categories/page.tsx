@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { PlusCircle, Edit, Trash2, Palette, DatabaseBackup, Terminal } from "lucide-react";
 import type { Category } from "@/lib/types";
-import { categories as mockCategories, iconMap } from "@/lib/data";
+import { categories as mockCategories, iconMap } from "@/lib/data"; // mockCategories se usa como fallback si localStorage está vacío en offline
 import { AddEditCategoryDialog } from "@/components/categories/AddEditCategoryDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useDataMode } from "@/hooks/useDataMode";
@@ -56,18 +56,15 @@ export default function CategoriesPage() {
     setTimeout(() => {
       let loadedCategories: Category[];
       if (mode === 'online') {
-        // En modo online, las categorías se considerarían cargadas desde una "base de datos".
-        // Por ahora, usamos mockCategories como base. No se leen de localStorage.
-        // Las modificaciones en esta página en modo online no serán persistentes
-        // hasta que se implemente una base de datos real.
-        loadedCategories = mockCategories.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette }));
+        // En modo online, simular que no hay categorías desde la BD.
+        loadedCategories = []; 
       } else { // Offline mode
         const storedCategories = localStorage.getItem('customCategories');
          if (storedCategories) {
           loadedCategories = JSON.parse(storedCategories).map((cat: Omit<Category, 'icon'>) => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
         } else {
-          // Si no hay nada en localStorage en modo offline, usar mocks como datos iniciales.
-          loadedCategories = mockCategories.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
+          // Si no hay nada en localStorage en modo offline, la lista se muestra vacía.
+          loadedCategories = []; 
         }
       }
       setCategories(loadedCategories);
@@ -100,7 +97,7 @@ export default function CategoriesPage() {
     if (categoryToDelete) {
       setCategories((prev) => {
         const updated = prev.filter((c) => c.id !== categoryToDelete.id);
-        saveCategoriesToLocalStorage(updated); // Guardará solo si es modo offline
+        saveCategoriesToLocalStorage(updated); 
         return updated;
       });
       toast({ title: "Categoría Eliminada", description: `La categoría "${categoryToDelete.name}" ha sido eliminada.` });
@@ -119,13 +116,13 @@ export default function CategoriesPage() {
       } else {
         const newCategory: Category = {
           ...data,
-          id: String(Date.now()), // Simple ID generation
+          id: String(Date.now()), 
           icon: iconMap[data.iconName] || Palette,
         };
         updated = [...prev, newCategory];
         toast({ title: "Categoría Agregada", description: `La categoría "${data.name}" ha sido agregada.` });
       }
-      saveCategoriesToLocalStorage(updated); // Guardará solo si es modo offline
+      saveCategoriesToLocalStorage(updated); 
       return updated;
     });
     setIsDialogOpen(false);
@@ -141,13 +138,13 @@ export default function CategoriesPage() {
             <Terminal className="h-4 w-4" />
             <AlertTitle>Modo de Datos</AlertTitle>
             <AlertDescription>
-              {mode === 'online' ? "Cargando categorías en Modo Online..." : "Cargando categorías en Modo Offline..."}
+              {mode === 'online' ? "Verificando categorías en Modo Online..." : "Cargando categorías en Modo Offline..."}
             </AlertDescription>
           </Alert>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Gestionar Categorías</CardTitle>
-              <Skeleton className="h-10 w-48" /> {/* Skeleton for Add Button */}
+              <Skeleton className="h-10 w-48" /> 
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -171,8 +168,9 @@ export default function CategoriesPage() {
             <Terminal className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
             <AlertTitle>Modo Online Activo</AlertTitle>
             <AlertDescription>
-              Las categorías se muestran desde una fuente base (simulada). Las modificaciones aquí no son persistentes
-              hasta que se implemente una base de datos. Para gestionar categorías persistentes localmente, cambia a Modo Offline.
+              En modo online, las categorías se obtendrían de una base de datos. Actualmente, no hay categorías cargadas.
+              Las modificaciones aquí no son persistentes hasta que se implemente una base de datos real.
+              Para gestionar categorías persistentes localmente, cambia a Modo Offline.
             </AlertDescription>
           </Alert>
         )}
@@ -189,14 +187,18 @@ export default function CategoriesPage() {
             <CardTitle>Lista de Categorías</CardTitle>
             <CardDescription>
               Administra tus categorías de ingresos y gastos.
-              {mode === 'offline' ? " Los cambios se guardan localmente." : ""}
+              {mode === 'offline' ? " Los cambios se guardan localmente en tu navegador." : " En modo online, los cambios no son persistentes."}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {categories.length > 0 ? (
               <div className="overflow-x-auto">
                 <Table>
-                <TableCaption>Tus categorías personalizadas.</TableCaption>
+                <TableCaption>
+                  {mode === 'offline' 
+                    ? "Tus categorías personalizadas guardadas localmente." 
+                    : "Categorías (no persistentes en modo online)."}
+                </TableCaption>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Icono</TableHead>
@@ -251,17 +253,26 @@ export default function CategoriesPage() {
               </div>
             ) : (
                <div className="text-center py-8">
-                 {mode === 'online' && categories.length === 0 && ( // Normalmente en online habría datos o error de BD
+                 {mode === 'online' && !isLoading && categories.length === 0 && (
                   <div className="flex flex-col items-center justify-center space-y-3">
                     <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
-                    <h3 className="text-xl font-semibold">No hay Categorías Base</h3>
-                    <p className="text-muted-foreground">
-                      No se pudieron cargar las categorías base en modo online.
+                    <h3 className="text-xl font-semibold">No hay Categorías en la Base de Datos</h3>
+                     <p className="text-muted-foreground">
+                      En modo online, las categorías se cargan desde la base de datos. <br />
+                      Parece que no hay categorías configuradas o no se pudo establecer conexión. <br />
+                      Puedes agregar categorías, pero no se guardarán permanentemente en esta simulación.
                     </p>
                   </div>
                  )}
-                 {mode === 'offline' && categories.length === 0 && (
-                   <p className="text-muted-foreground">No hay categorías para mostrar. ¡Agrega una nueva!</p>
+                 {mode === 'offline' && !isLoading && categories.length === 0 && (
+                   <div className="flex flex-col items-center justify-center space-y-3">
+                    <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
+                    <h3 className="text-xl font-semibold">No hay Categorías Guardadas Localmente</h3>
+                    <p className="text-muted-foreground">
+                      Estás en modo offline. No se encontraron categorías guardadas en tu navegador. <br />
+                      ¡Agrega una nueva categoría para comenzar! Se guardará localmente.
+                    </p>
+                  </div>
                  )}
               </div>
             )}
@@ -297,5 +308,3 @@ export default function CategoriesPage() {
     </>
   );
 }
-
-    
