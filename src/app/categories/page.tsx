@@ -30,7 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { PlusCircle, Edit, Trash2, Palette } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Palette, DatabaseBackup, Terminal } from "lucide-react";
 import type { Category } from "@/lib/types";
 import { categories as mockCategories, iconMap } from "@/lib/data";
 import { AddEditCategoryDialog } from "@/components/categories/AddEditCategoryDialog";
@@ -38,7 +38,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useDataMode } from "@/hooks/useDataMode";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
 
 export default function CategoriesPage() {
   const { mode, isInitialized: dataModeInitialized } = useDataMode();
@@ -54,33 +53,33 @@ export default function CategoriesPage() {
       return;
     }
     setIsLoading(true);
-    // Simulate data loading based on mode
     setTimeout(() => {
+      let loadedCategories: Category[];
       if (mode === 'online') {
-        // In a real app, fetch categories from DB. For now, empty or mock.
-        // To demonstrate CRUD locally even in online mode for categories for now:
-        const storedCategories = localStorage.getItem('customCategories');
-        if (storedCategories) {
-          setCategories(JSON.parse(storedCategories).map((cat: Category) => ({...cat, icon: iconMap[cat.iconName] || Palette })));
-        } else {
-          setCategories(mockCategories.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette })));
-        }
+        // En modo online, las categorías se considerarían cargadas desde una "base de datos".
+        // Por ahora, usamos mockCategories como base. No se leen de localStorage.
+        // Las modificaciones en esta página en modo online no serán persistentes
+        // hasta que se implemente una base de datos real.
+        loadedCategories = mockCategories.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette }));
       } else { // Offline mode
         const storedCategories = localStorage.getItem('customCategories');
          if (storedCategories) {
-          setCategories(JSON.parse(storedCategories).map((cat: Category) => ({...cat, icon: iconMap[cat.iconName] || Palette })));
+          loadedCategories = JSON.parse(storedCategories).map((cat: Omit<Category, 'icon'>) => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
         } else {
-          setCategories(mockCategories.map(cat => ({...cat, icon: iconMap[cat.iconName] || Palette })));
+          // Si no hay nada en localStorage en modo offline, usar mocks como datos iniciales.
+          loadedCategories = mockCategories.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
         }
       }
+      setCategories(loadedCategories);
       setIsLoading(false);
     }, 100);
   }, [mode, dataModeInitialized]);
 
   const saveCategoriesToLocalStorage = (updatedCategories: Category[]) => {
-    // Store only iconName, not the full icon component
-    const storableCategories = updatedCategories.map(({ icon, ...rest }) => rest);
-    localStorage.setItem('customCategories', JSON.stringify(storableCategories));
+    if (mode === 'offline') { // Solo guardar en localStorage si estamos en modo offline
+      const storableCategories = updatedCategories.map(({ icon, ...rest }) => rest);
+      localStorage.setItem('customCategories', JSON.stringify(storableCategories));
+    }
   };
 
   const handleAddCategory = () => {
@@ -99,19 +98,9 @@ export default function CategoriesPage() {
 
   const confirmDelete = () => {
     if (categoryToDelete) {
-      // Basic check: prevent deleting if transactions use this category
-      // In a real app, this check would be more robust, possibly against a DB
-      // For now, as transactions are not linked to this local state, we allow deletion.
-      // const isCategoryInUse = transactions.some(t => t.categoryId === categoryToDelete.id);
-      // if (isCategoryInUse) {
-      //   toast({ title: "Error", description: "Esta categoría está siendo utilizada por transacciones y no puede ser eliminada.", variant: "destructive" });
-      //   setCategoryToDelete(null);
-      //   return;
-      // }
-
       setCategories((prev) => {
         const updated = prev.filter((c) => c.id !== categoryToDelete.id);
-        saveCategoriesToLocalStorage(updated);
+        saveCategoriesToLocalStorage(updated); // Guardará solo si es modo offline
         return updated;
       });
       toast({ title: "Categoría Eliminada", description: `La categoría "${categoryToDelete.name}" ha sido eliminada.` });
@@ -136,7 +125,7 @@ export default function CategoriesPage() {
         updated = [...prev, newCategory];
         toast({ title: "Categoría Agregada", description: `La categoría "${data.name}" ha sido agregada.` });
       }
-      saveCategoriesToLocalStorage(updated);
+      saveCategoriesToLocalStorage(updated); // Guardará solo si es modo offline
       return updated;
     });
     setIsDialogOpen(false);
@@ -177,6 +166,17 @@ export default function CategoriesPage() {
     <>
       <AppHeader title="Categorías" />
       <main className="flex-1 p-4 md:p-6 space-y-6">
+        {mode === 'online' && (
+          <Alert className="mb-4 border-blue-500 text-blue-700 dark:border-blue-400 dark:text-blue-300">
+            <Terminal className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
+            <AlertTitle>Modo Online Activo</AlertTitle>
+            <AlertDescription>
+              Las categorías se muestran desde una fuente base (simulada). Las modificaciones aquí no son persistentes
+              hasta que se implemente una base de datos. Para gestionar categorías persistentes localmente, cambia a Modo Offline.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex justify-end mb-4">
           <Button onClick={handleAddCategory}>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -189,6 +189,7 @@ export default function CategoriesPage() {
             <CardTitle>Lista de Categorías</CardTitle>
             <CardDescription>
               Administra tus categorías de ingresos y gastos.
+              {mode === 'offline' ? " Los cambios se guardan localmente." : ""}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -249,9 +250,20 @@ export default function CategoriesPage() {
                 </Table>
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-8">
-                No hay categorías para mostrar. ¡Agrega una nueva!
-              </p>
+               <div className="text-center py-8">
+                 {mode === 'online' && categories.length === 0 && ( // Normalmente en online habría datos o error de BD
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
+                    <h3 className="text-xl font-semibold">No hay Categorías Base</h3>
+                    <p className="text-muted-foreground">
+                      No se pudieron cargar las categorías base en modo online.
+                    </p>
+                  </div>
+                 )}
+                 {mode === 'offline' && categories.length === 0 && (
+                   <p className="text-muted-foreground">No hay categorías para mostrar. ¡Agrega una nueva!</p>
+                 )}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -272,6 +284,7 @@ export default function CategoriesPage() {
               <AlertDialogDescription>
                 Esta acción no se puede deshacer. Se eliminará la categoría "{categoryToDelete.name}".
                 Asegúrate de que ninguna transacción o presupuesto esté utilizando esta categoría.
+                {mode === 'online' && " (Esta acción no afectará la base de datos en la versión actual)."}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -284,3 +297,5 @@ export default function CategoriesPage() {
     </>
   );
 }
+
+    
