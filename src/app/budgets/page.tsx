@@ -36,6 +36,12 @@ import { useDataMode } from "@/hooks/useDataMode";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+interface ToastInfo {
+  title: string;
+  description: string;
+  variant?: "default" | "destructive";
+}
+
 export default function BudgetsPage() {
   const { mode, isInitialized: dataModeInitialized } = useDataMode();
   const [budgetGoals, setBudgetGoals] = useState<BudgetGoal[]>([]);
@@ -46,6 +52,14 @@ export default function BudgetsPage() {
   const [editingBudget, setEditingBudget] = useState<BudgetGoal | null>(null);
   const [budgetToDelete, setBudgetToDelete] = useState<BudgetGoal | null>(null);
   const { toast } = useToast();
+  const [toastInfo, setToastInfo] = useState<ToastInfo | null>(null);
+
+  useEffect(() => {
+    if (toastInfo) {
+      toast(toastInfo);
+      setToastInfo(null); // Reset after showing
+    }
+  }, [toastInfo, toast]);
 
   useEffect(() => {
     if (!dataModeInitialized) {
@@ -58,10 +72,10 @@ export default function BudgetsPage() {
       let loadedBudgetGoals: BudgetGoal[];
 
       if (mode === 'online') {
-        console.log("BudgetsPage: MODO ONLINE. Limpiando datos locales. Usando categorías base.");
+        console.log("BudgetsPage: MODO ONLINE. Usando categorías base. Presupuestos y transacciones se simularán vacíos.");
         loadedCategories = mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
-        loadedTransactions = []; // En online mode, transactions vendrían de la BD
-        loadedBudgetGoals = [];  // En online mode, budget goals vendrían de la BD
+        loadedTransactions = []; 
+        loadedBudgetGoals = [];  
       } else { // Offline mode
         console.log("BudgetsPage: MODO OFFLINE. Cargando datos de demostración.");
         loadedCategories = mockCategoriesData.map(cat => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
@@ -80,6 +94,12 @@ export default function BudgetsPage() {
     if (mode === 'online') {
       setEditingBudget(null);
       setIsDialogOpen(true);
+    } else {
+       setToastInfo({
+        title: "Modo Offline",
+        description: "La adición de objetivos de presupuesto solo está permitida en Modo Online.",
+        variant: "default",
+      });
     }
   };
 
@@ -87,47 +107,66 @@ export default function BudgetsPage() {
     if (mode === 'online') {
       setEditingBudget(budget);
       setIsDialogOpen(true);
+    } else {
+      setToastInfo({
+        title: "Modo Offline",
+        description: "La edición de objetivos de presupuesto solo está permitida en Modo Online.",
+        variant: "default",
+      });
     }
   };
 
   const handleDeleteBudget = (budget: BudgetGoal) => {
     if (mode === 'online') {
       setBudgetToDelete(budget);
+    } else {
+       setToastInfo({
+        title: "Modo Offline",
+        description: "La eliminación de objetivos de presupuesto solo está permitida en Modo Online.",
+        variant: "default",
+      });
     }
   };
 
   const confirmDelete = () => {
     if (budgetToDelete && mode === 'online') {
+      const categoryName = categories.find(c => c.id === budgetToDelete.categoryId)?.name || "Desconocida";
       setBudgetGoals((prev) => prev.filter((b) => b.id !== budgetToDelete.id));
-      toast({ title: "Objetivo de Presupuesto Eliminado (Simulado)", description: `El objetivo para la categoría ha sido eliminado (en modo online simulado).` });
+      setToastInfo({ 
+        title: "Objetivo de Presupuesto Eliminado", 
+        description: `El objetivo para "${categoryName}" ha sido eliminado.` 
+      });
       setBudgetToDelete(null);
-      // En una app real, aquí se llamaría a la función para eliminar de Firebase/BD
     }
   };
 
   const handleSubmitDialog = (data: Omit<BudgetGoal, 'id'> & { id?: string }) => {
     if (mode === 'online') {
+      let toastTitle = "";
+      let toastDescription = "";
+      const category = categories.find(c => c.id === data.categoryId);
+      const categoryName = category?.name || 'Desconocida';
+
       setBudgetGoals((prev) => {
         let updated;
-        const category = categories.find(c => c.id === data.categoryId);
-        const categoryName = category?.name || 'Desconocida';
-
         if (editingBudget) {
           updated = prev.map((b) =>
             b.id === editingBudget.id ? { ...editingBudget, ...data } : b
           );
-          toast({ title: "Objetivo de Presupuesto Actualizado (Simulado)", description: `El objetivo para "${categoryName}" ha sido actualizado (en modo online simulado).` });
+          toastTitle = "Objetivo de Presupuesto Actualizado";
+          toastDescription = `El objetivo para "${categoryName}" ha sido actualizado.`;
         } else {
           const newBudgetGoal: BudgetGoal = {
             ...data,
             id: String(Date.now()), 
           };
           updated = [...prev, newBudgetGoal];
-          toast({ title: "Objetivo de Presupuesto Agregado (Simulado)", description: `El objetivo para "${categoryName}" ha sido agregado (en modo online simulado).` });
+          toastTitle = "Objetivo de Presupuesto Agregado";
+          toastDescription = `El objetivo para "${categoryName}" ha sido agregado.`;
         }
-        // En una app real, aquí se llamaría a la función para guardar en Firebase/BD
         return updated;
       });
+      setToastInfo({ title: toastTitle, description: toastDescription });
       setIsDialogOpen(false);
       setEditingBudget(null);
     }
@@ -206,7 +245,7 @@ export default function BudgetsPage() {
               {budgetDetails.length === 0 && !isLoading
                 ? "Intentando conectar con la base de datos para presupuestos. Si es una cuenta nueva o no hay conexión, no se mostrarán datos. "
                 : "Los datos de presupuestos se gestionan a través de la conexión online. "}
-              La funcionalidad completa de base de datos está pendiente de implementación.
+              La funcionalidad completa de base de datos está pendiente de implementación. Las operaciones son simuladas.
             </AlertDescription>
           </Alert>
         )}
@@ -216,7 +255,7 @@ export default function BudgetsPage() {
             <AlertTitle>Modo Offline (Demostración)</AlertTitle>
             <AlertDescription>
               Estás viendo objetivos de presupuesto de demostración. No puedes agregar, editar ni eliminar objetivos en este modo.
-              Cambia a Modo Online para gestionar tus propios presupuestos (funcionalidad de base de datos pendiente).
+              Cambia a Modo Online para gestionar tus propios presupuestos.
             </AlertDescription>
           </Alert>
         )}
@@ -300,7 +339,7 @@ export default function BudgetsPage() {
                     </p>
                   </div>
                  )}
-                 {mode === 'offline' && budgetDetails.length === 0 && (
+                 {mode === 'offline' && budgetGoals.length === 0 && ( // Check budgetGoals directly for offline if no processing needed
                    <p className="text-muted-foreground">No hay objetivos de presupuesto de demostración para mostrar.</p>
                  )}
               </div>
