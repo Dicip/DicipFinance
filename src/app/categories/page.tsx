@@ -56,12 +56,9 @@ export default function CategoriesPage() {
     setTimeout(() => {
       let loadedCategories: Category[];
       if (mode === 'online') {
-        // En modo online, simular que no hay categorías desde la BD inicialmente.
-        // En una app real, aquí se haría fetch a Firebase/BD
-        console.log("CategoriesPage: MODO ONLINE. Usando categorías base (simulación BD).");
-        loadedCategories = mockCategoriesData.map((cat: Omit<Category, 'icon'>) => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
+        console.log("CategoriesPage: MODO ONLINE. Lista de categorías inicialmente vacía.");
+        loadedCategories = []; // En modo online, las categorías deberían venir de la BD. Simular lista vacía.
       } else { // Offline mode
-        // En modo offline, siempre usamos las categorías de demostración.
         console.log("CategoriesPage: MODO OFFLINE. Cargando categorías de demostración.");
         loadedCategories = mockCategoriesData.map((cat: Omit<Category, 'icon'>) => ({ ...cat, icon: iconMap[cat.iconName] || Palette }));
       }
@@ -112,9 +109,8 @@ export default function CategoriesPage() {
   const confirmDelete = () => {
     if (categoryToDelete && mode === 'online') {
       setCategories((prev) => prev.filter((c) => c.id !== categoryToDelete.id));
-      toast({ title: "Categoría Eliminada (Simulado)", description: `La categoría "${categoryToDelete.name}" ha sido eliminada (en modo online simulado).` });
+      toast({ title: "Categoría Eliminada (Simulado)", description: `La categoría "${categoryToDelete.name}" ha sido eliminada (los cambios son locales en esta simulación).` });
       setCategoryToDelete(null);
-      // En una app real, aquí se llamaría a la función para eliminar de Firebase/BD
     }
   };
 
@@ -126,7 +122,7 @@ export default function CategoriesPage() {
           updated = prev.map((c) =>
             c.id === editingCategory.id ? { ...c, ...data, icon: iconMap[data.iconName] || Palette } : c
           );
-          toast({ title: "Categoría Actualizada (Simulado)", description: `La categoría "${data.name}" ha sido actualizada (en modo online simulado).` });
+          toast({ title: "Categoría Actualizada (Simulado)", description: `La categoría "${data.name}" ha sido actualizada (los cambios son locales en esta simulación).` });
         } else {
           const newCategory: Category = {
             ...data,
@@ -134,9 +130,8 @@ export default function CategoriesPage() {
             icon: iconMap[data.iconName] || Palette,
           };
           updated = [...prev, newCategory];
-          toast({ title: "Categoría Agregada (Simulado)", description: `La categoría "${data.name}" ha sido agregada (en modo online simulado).` });
+          toast({ title: "Categoría Agregada (Simulado)", description: `La categoría "${data.name}" ha sido agregada (los cambios son locales en esta simulación).` });
         }
-        // En una app real, aquí se llamaría a la función para guardar en Firebase/BD
         return updated;
       });
       setIsDialogOpen(false);
@@ -183,7 +178,8 @@ export default function CategoriesPage() {
             <Terminal className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
             <AlertTitle>Modo Online Activo</AlertTitle>
             <AlertDescription>
-              En modo online, las categorías se obtendrían de una base de datos.
+              En modo online, las categorías se obtendrían de una base de datos. 
+              Si no hay conexión o es una cuenta nueva, la lista estará vacía.
               Puedes agregar y editar categorías, pero los cambios son simulados y no persistirán hasta que se implemente una base de datos real.
             </AlertDescription>
           </Alert>
@@ -224,7 +220,7 @@ export default function CategoriesPage() {
                 <TableCaption>
                   {mode === 'offline' 
                     ? "Categorías de demostración." 
-                    : categories.length > 0 ? "Categorías (simuladas, no persistentes en modo online)." : "No hay categorías para mostrar."}
+                    : categories.length > 0 ? "Categorías gestionadas (simuladas, no persistentes en modo online)." : "No hay categorías para mostrar."}
                 </TableCaption>
                   <TableHeader>
                     <TableRow>
@@ -292,7 +288,7 @@ export default function CategoriesPage() {
                     </p>
                   </div>
                  )}
-                 {mode === 'offline' && !isLoading && categories.length === 0 && ( // Esto no debería pasar si mockCategoriesData tiene datos
+                 {mode === 'offline' && !isLoading && categories.length === 0 && ( // Esto no debería pasar si mockCategoriesData tiene datos, ya que se cargan.
                    <div className="flex flex-col items-center justify-center space-y-3">
                     <DatabaseBackup className="h-12 w-12 text-muted-foreground" />
                     <h3 className="text-xl font-semibold">No hay Categorías de Demostración</h3>
